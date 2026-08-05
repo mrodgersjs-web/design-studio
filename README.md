@@ -1,6 +1,8 @@
 # design-studio
 
 > **Public-safe design systems surface for FDE delivery — tokens, components, and review checklists.**
+**Outcome:** One-command smoke (`bash scripts/smoke.sh`) verifies the studio in a 60-second proof path.
+
 
 ![status](https://img.shields.io/badge/status-public-studio-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
