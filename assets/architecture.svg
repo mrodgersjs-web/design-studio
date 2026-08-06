@@ -1,0 +1,131 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 400" width="1200" height="400" role="img" aria-label="Design Studio token pipeline">
+<defs>
+  <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" stop-color="#0D0A07"/>
+    <stop offset="55%" stop-color="#0A0806"/>
+    <stop offset="100%" stop-color="#0B0705"/>
+  </linearGradient>
+  <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#8A7148"/>
+    <stop offset="50%" stop-color="#C8A96E"/>
+    <stop offset="100%" stop-color="#E8CD98"/>
+  </linearGradient>
+  <linearGradient id="goldGradSoft" x1="0%" y1="0%" x2="100%" y2="0%">
+    <stop offset="0%" stop-color="#C8A96E" stop-opacity="0.15"/>
+    <stop offset="50%" stop-color="#C8A96E" stop-opacity="0.75"/>
+    <stop offset="100%" stop-color="#C8A96E" stop-opacity="0.15"/>
+  </linearGradient>
+  <linearGradient id="panelFill" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%" stop-color="#181109"/>
+    <stop offset="100%" stop-color="#0E0A06"/>
+  </linearGradient>
+  <linearGradient id="panelFillLit" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%" stop-color="#211708"/>
+    <stop offset="100%" stop-color="#120C07"/>
+  </linearGradient>
+  <linearGradient id="panelFillRust" x1="0%" y1="0%" x2="0%" y2="100%">
+    <stop offset="0%" stop-color="#20130F"/>
+    <stop offset="100%" stop-color="#140B08"/>
+  </linearGradient>
+  <radialGradient id="glowGold" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#C8A96E" stop-opacity="0.38"/>
+    <stop offset="100%" stop-color="#C8A96E" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="glowGoldFaint" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#C8A96E" stop-opacity="0.14"/>
+    <stop offset="100%" stop-color="#C8A96E" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="glowCream" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#F5F0EB" stop-opacity="0.12"/>
+    <stop offset="100%" stop-color="#F5F0EB" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="glowRust" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#9A5A48" stop-opacity="0.30"/>
+    <stop offset="100%" stop-color="#9A5A48" stop-opacity="0"/>
+  </radialGradient>
+  <radialGradient id="glowSage" cx="50%" cy="50%" r="50%">
+    <stop offset="0%" stop-color="#7C9482" stop-opacity="0.28"/>
+    <stop offset="100%" stop-color="#7C9482" stop-opacity="0"/>
+  </radialGradient>
+  <filter id="softBlur" x="-80%" y="-80%" width="260%" height="260%">
+    <feGaussianBlur stdDeviation="16"/>
+  </filter>
+  <filter id="fineGlow" x="-100%" y="-100%" width="300%" height="300%">
+    <feGaussianBlur stdDeviation="2.4" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <marker id="arrowGold" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#C8A96E"/>
+  </marker>
+  <marker id="arrowStone" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#A09890"/>
+  </marker>
+  <marker id="arrowRust" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#9A5A48"/>
+  </marker>
+  <marker id="arrowSage" viewBox="0 0 10 10" refX="7.5" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse">
+    <path d="M0,0 L10,5 L0,10 z" fill="#7C9482"/>
+  </marker>
+  <pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse">
+    <path d="M28 0H0V28" fill="none" stroke="#F5F0EB" stroke-opacity="0.028" stroke-width="1"/>
+  </pattern>
+</defs>
+
+  <rect x="0" y="0" width="1200" height="400" fill="url(#bgGrad)"/>
+  <rect x="0" y="0" width="1200" height="400" fill="url(#grid)"/>
+  
+  <circle cx="130" cy="200" r="170" fill="url(#glowGoldFaint)"/>
+  <circle cx="1080" cy="200" r="170" fill="url(#glowCream)"/>
+
+  <rect x="0.5" y="0.5" width="1199" height="399" fill="none" stroke="#C8A96E" stroke-opacity="0.18" stroke-width="1"/>
+  <line x1="40" y1="368" x2="1160" y2="368" stroke="url(#goldGradSoft)" stroke-width="1"/>
+
+  <text x="44" y="24" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="11" font-weight="600" letter-spacing="3.2" fill="#C8A96E">FROM PRIMITIVE TO APPROVED</text>
+  <text x="44" y="56" font-family="'Cormorant Garamond', 'Times New Roman', serif" font-style="italic" font-size="30" fill="#F5F0EB">Design Studio</text>
+  <text x="1156" y="40" text-anchor="end" font-family="'JetBrains Mono', 'SF Mono', Consolas, monospace" font-size="11" letter-spacing="0.5" fill="#A09890">design.review()</text>
+  <line x1="44" y1="70" x2="108" y2="70" stroke="#C8A96E" stroke-width="1.5"/>
+
+  <g>
+    
+    <rect x="50" y="140" width="200" height="140" rx="14" fill="url(#panelFillLit)" stroke="#C8A96E" stroke-opacity="0.38" stroke-width="1.1"/>
+    <rect x="50" y="140" width="200" height="2" rx="1" fill="#C8A96E" opacity="0.55"/>
+    <text x="150.0" y="214.0" text-anchor="middle" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="13" letter-spacing="0.3" fill="#F5F0EB">DESIGN TOKENS</text>
+    
+  </g><g transform="translate(110,192) scale(1.0)"><circle cx="-10" cy="0" r="6" fill="#C8A96E" opacity="0.9" stroke="#0A0806" stroke-width="1"/><circle cx="0" cy="0" r="6" fill="#F5F0EB" opacity="0.9" stroke="#0A0806" stroke-width="1"/><circle cx="10" cy="0" r="6" fill="#A09890" opacity="0.9" stroke="#0A0806" stroke-width="1"/></g><g transform="translate(168,196) scale(0.85)" font-family="'Cormorant Garamond', 'Times New Roman', serif" font-style="italic" fill="#E8CD98">
+    <text x="-11" y="8" font-size="22">Aa</text>
+  </g><g transform="translate(150,234) scale(0.9)" stroke="#F5F0EB" stroke-width="1.6">
+    <line x1="-14" y1="0" x2="14" y2="0"/>
+    <line x1="-14" y1="-4" x2="-14" y2="4"/>
+    <line x1="-7" y1="-3" x2="-7" y2="3"/>
+    <line x1="0" y1="-4" x2="0" y2="4"/>
+    <line x1="7" y1="-3" x2="7" y2="3"/>
+    <line x1="14" y1="-4" x2="14" y2="4"/>
+  </g><text x="150" y="268" text-anchor="middle" font-family="'JetBrains Mono', 'SF Mono', Consolas, monospace" font-size="9" letter-spacing="0.4" fill="#A09890">color · type · spacing</text><path d="M250,210 C325.0,210 325.0,210 400,210" fill="none" stroke="#C8A96E" stroke-width="1.9"  opacity="1" marker-end="url(#arrowGold)" stroke-linecap="round"/>
+  <g>
+    
+    <rect x="400" y="154" width="140" height="112" rx="14" fill="url(#panelFill)" stroke="#C8A96E" stroke-opacity="0.38" stroke-width="1.1"/>
+    <rect x="400" y="154" width="140" height="2" rx="1" fill="#C8A96E" opacity="0.55"/>
+    <text x="470.0" y="204.0" text-anchor="middle" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="11.5" letter-spacing="0.3" fill="#F5F0EB">COMPONENTS</text>
+    <text x="470.0" y="228.0" text-anchor="middle" font-family="'JetBrains Mono', 'SF Mono', Consolas, monospace" font-size="10.5" letter-spacing="0.4" fill="#A09890">assembled</text>
+  </g><g transform="translate(470,194) scale(1.1)" stroke="#C8A96E" stroke-width="1.8" fill="none">
+    <rect x="-14" y="-10" width="12" height="9" rx="1.5"/>
+    <rect x="2" y="-10" width="12" height="9" rx="1.5"/>
+    <rect x="-6" y="3" width="12" height="9" rx="1.5"/>
+  </g><path d="M540,210 C600.0,210 600.0,210 660,210" fill="none" stroke="#C8A96E" stroke-width="1.9"  opacity="1" marker-end="url(#arrowGold)" stroke-linecap="round"/>
+  <g>
+    
+    <rect x="660" y="154" width="140" height="112" rx="14" fill="url(#panelFill)" stroke="#C8A96E" stroke-opacity="0.38" stroke-width="1.1"/>
+    <rect x="660" y="154" width="140" height="2" rx="1" fill="#C8A96E" opacity="0.55"/>
+    <text x="730.0" y="204.0" text-anchor="middle" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="11.5" letter-spacing="0.3" fill="#F5F0EB">CHECKLISTS</text>
+    <text x="730.0" y="228.0" text-anchor="middle" font-family="'JetBrains Mono', 'SF Mono', Consolas, monospace" font-size="10.5" letter-spacing="0.4" fill="#A09890">a11y · contrast</text>
+  </g><g transform="translate(730,194) scale(1.0)"><rect x="-11" y="-11" width="6" height="6" rx="1.5" fill="none" stroke="#C8A96E" stroke-width="1.4"/><line x1="-2" y1="-8" x2="9" y2="-8" stroke="#C8A96E" stroke-width="1.4" opacity="0.7"/><rect x="-11" y="-3" width="6" height="6" rx="1.5" fill="none" stroke="#C8A96E" stroke-width="1.4"/><line x1="-2" y1="0" x2="9" y2="0" stroke="#C8A96E" stroke-width="1.4" opacity="0.7"/><rect x="-11" y="5" width="6" height="6" rx="1.5" fill="none" stroke="#C8A96E" stroke-width="1.4"/><line x1="-2" y1="8" x2="5" y2="8" stroke="#C8A96E" stroke-width="1.4" opacity="0.7"/></g><path d="M800,210 C860.0,210 860.0,210 920,210" fill="none" stroke="#C8A96E" stroke-width="1.9"  opacity="1" marker-end="url(#arrowGold)" stroke-linecap="round"/>
+  <g>
+    <rect x="890" y="140" width="200" height="140" rx="22" fill="url(#glowGold)" filter="url(#softBlur)" opacity="0.5"/>
+    <rect x="900" y="150" width="180" height="120" rx="14" fill="url(#panelFillLit)" stroke="#C8A96E" stroke-opacity="0.38" stroke-width="1.1"/>
+    <rect x="900" y="150" width="180" height="2" rx="1" fill="#C8A96E" opacity="0.55"/>
+    <text x="990.0" y="204.0" text-anchor="middle" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-weight="600" font-size="13" letter-spacing="0.3" fill="#F5F0EB">REVIEW</text>
+    <text x="990.0" y="228.0" text-anchor="middle" font-family="'JetBrains Mono', 'SF Mono', Consolas, monospace" font-size="10.5" letter-spacing="0.4" fill="#A09890">signed off</text>
+  </g><g transform="translate(990,196) scale(1.1)">
+    <path d="M-14,0 C-9,-8 9,-8 14,0 C9,8 -9,8 -14,0 Z" fill="none" stroke="#F5F0EB" stroke-width="2" stroke-linejoin="round"/>
+    <circle cx="0" cy="0" r="4" fill="none" stroke="#F5F0EB" stroke-width="2"/>
+  </g><text x="44" y="386" font-family="'Hanken Grotesk', 'Helvetica Neue', Arial, sans-serif" font-size="10.5" letter-spacing="0.8" fill="#A09890">nothing ships without tracing back to a token</text><text x="1156" y="386" text-anchor="end" font-family="'JetBrains Mono', 'SF Mono', Consolas, monospace" font-size="10.5" letter-spacing="0.4" fill="#A09890">TOKENS → REVIEW</text></svg>
