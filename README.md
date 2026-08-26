@@ -1,4 +1,5 @@
 # design-studio
+<p align="center"><img src="docs/rig-design-studio-demo.gif" alt="demo" width="720" /></p>
 
 > **Public-safe design systems surface for FDE delivery — tokens, components, and review checklists.**
 **Outcome:** One-command smoke (`bash scripts/smoke.sh`) verifies the studio in a 60-second proof path.
