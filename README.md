@@ -22,6 +22,13 @@ cd design-studio && bash scripts/smoke.sh
 brief → tokens → components → a11y/review checklist → handoff
 ```
 
+## Checklists
+- [`checklists/ui-review.md`](checklists/ui-review.md) — artifact review (hierarchy, contrast, focus states).
+- [`checklists/ai-design-review.md`](checklists/ai-design-review.md) — process review for AI-generated design; three gates that separate production output from the tool's house style.
+
+## Reference-driven AI design
+[`docs/reference-driven-design.md`](docs/reference-driven-design.md) — curated references from real shipped products beat prompting from scratch, and the first generation is never the deliverable. Derived from two independent practitioner walkthroughs that converge on the same rule.
+
 ## Public boundary
 No private brand OS dumps, no customer Figma exports with confidential product IP.
 See `docs/public-boundary.md`.
