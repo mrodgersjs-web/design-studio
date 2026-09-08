@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Parity + Satori contract for the governed rigds MCP server.
+"""Source-tree MCP contract against frozen legacy six-tool fixtures.
 
-Compares the live pipx `rigds-mcp` six-tool surface to mcp/rigds_mcp.py
-before any pipx cutover. Satori FAIL must set isError true.
+Does not use live `rigds-mcp` as an oracle (that is the current wheel).
+Satori FAIL must set isError true. Empty stdout is child EOF, not a timeout spin.
 """
 from __future__ import annotations
 
 import json
+import os
 import select
 import subprocess
 import sys
@@ -16,14 +17,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parent
 SKILL = REPO / "skills" / "rig-design-studio-satori-apple"
-CORE = [
-    "rigds_missions",
-    "rigds_ledger",
-    "rigds_compose",
-    "rigds_artifacts",
-    "rigds_engine",
-    "rigds_backend",
-]
+FIXTURE = ROOT / "fixtures" / "legacy-tools.json"
 
 
 def rpc(cmd, calls, timeout=8, env=None):
@@ -35,7 +29,6 @@ def rpc(cmd, calls, timeout=8, env=None):
         text=True,
         env=env,
     )
-    out = []
     try:
         def send(obj):
             proc.stdin.write(json.dumps(obj) + "\n")
@@ -45,14 +38,19 @@ def rpc(cmd, calls, timeout=8, env=None):
             start = time.time()
             while time.time() - start < timeout:
                 ready, _, _ = select.select([proc.stdout], [], [], 0.2)
-                if proc.poll() is not None and not ready:
-                    raise SystemExit(f"exit {proc.returncode} stderr={proc.stderr.read()[:800]}")
                 if not ready:
+                    if proc.poll() is not None:
+                        raise SystemExit(
+                            f"exit {proc.returncode} stderr={proc.stderr.read()[:800]}"
+                        )
                     continue
                 line = proc.stdout.readline()
-                if line:
-                    return json.loads(line)
-            raise SystemExit(f"timeout cmd={cmd}")
+                if line == "":
+                    raise SystemExit(
+                        f"EOF exit={proc.poll()} stderr={proc.stderr.read()[:800]}"
+                    )
+                return json.loads(line)
+            raise SystemExit(f"timeout cmd={cmd} exit={proc.poll()}")
 
         send({"jsonrpc": "2.0", "id": 1, "method": "initialize",
               "params": {"protocolVersion": "2024-11-05", "capabilities": {},
@@ -81,52 +79,42 @@ def text_of(msg):
 
 
 def main():
-    import os
-    old_cmd = ["rigds-mcp"]
-    new_cmd = [sys.executable, "-m", "rigds_mcp.server"]
-    new_env = dict(os.environ)
-    new_env["PYTHONPATH"] = str(REPO) + (os.pathsep + new_env["PYTHONPATH"] if new_env.get("PYTHONPATH") else "")
-    list_call = [{"method": "tools/list"}]
-    old = rpc(old_cmd, list_call)
-    new = rpc(new_cmd, list_call, env=new_env)
-    old_tools = tool_map(old["tools/list:2"])
-    new_tools = tool_map(new["tools/list:2"])
-    missing = [n for n in CORE if n not in new_tools]
+    legacy = {t["name"]: t for t in json.loads(FIXTURE.read_text())}
+    cmd = [sys.executable, "-m", "rigds_mcp.server"]
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(REPO) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
+    listed = rpc(cmd, [{"method": "tools/list"}], env=env)
+    tools = tool_map(listed["tools/list:2"])
+    missing = [n for n in legacy if n not in tools]
     if missing:
         raise SystemExit(f"FAIL missing core tools: {missing}")
-    for name in CORE:
-        if name not in old_tools:
-            raise SystemExit(f"FAIL live server missing {name}")
-        if old_tools[name]["inputSchema"] != new_tools[name]["inputSchema"]:
+    for name, spec in legacy.items():
+        if tools[name]["inputSchema"] != spec["inputSchema"]:
             raise SystemExit(f"FAIL schema drift on {name}")
-        if old_tools[name]["description"] != new_tools[name]["description"]:
+        if tools[name]["description"] != spec["description"]:
             raise SystemExit(f"FAIL description drift on {name}")
-    if "rigds_satori_skill" not in new_tools or "rigds_satori_score" not in new_tools:
+    if "rigds_satori_skill" not in tools or "rigds_satori_score" not in tools:
         raise SystemExit("FAIL missing satori tools")
 
-    engine_old = rpc(old_cmd, [{"method": "tools/call", "params": {"name": "rigds_engine", "arguments": {}}}])
-    engine_new = rpc(new_cmd, [{"method": "tools/call", "params": {"name": "rigds_engine", "arguments": {}}}], env=new_env)
-    old_txt = text_of(engine_old["tools/call:2"])
-    new_txt = text_of(engine_new["tools/call:2"])
-    if engine_new["tools/call:2"].get("result", {}).get("isError"):
-        raise SystemExit(f"FAIL new engine isError: {new_txt[:400]}")
-    if json.loads(old_txt) != json.loads(new_txt):
-        raise SystemExit(f"FAIL engine parity\nOLD {old_txt[:400]}\nNEW {new_txt[:400]}")
+    engine = rpc(cmd, [{"method": "tools/call", "params": {"name": "rigds_engine", "arguments": {}}}], env=env)
+    engine_txt = text_of(engine["tools/call:2"])
+    if engine["tools/call:2"].get("result", {}).get("isError"):
+        raise SystemExit(f"FAIL engine isError: {engine_txt[:400]}")
 
-    compose_new = rpc(new_cmd, [{"method": "tools/call", "params": {"name": "rigds_compose", "arguments": {"preset": "converter"}}}], env=new_env)
-    compose_txt = text_of(compose_new["tools/call:2"])
+    compose = rpc(cmd, [{"method": "tools/call", "params": {"name": "rigds_compose", "arguments": {"preset": "converter"}}}], env=env)
+    compose_txt = text_of(compose["tools/call:2"])
     compose_obj = json.loads(compose_txt)
-    if compose_obj.get("error") or compose_new["tools/call:2"].get("result", {}).get("isError"):
+    if compose_obj.get("error") or compose["tools/call:2"].get("result", {}).get("isError"):
         raise SystemExit(f"FAIL compose: {compose_txt[:400]}")
     if compose_obj.get("preset") != "converter" or not compose_obj.get("stack"):
         raise SystemExit(f"FAIL compose stack: {compose_txt[:400]}")
 
     pass_path = str(SKILL / "fixtures" / "pass.json")
     fail_path = str(SKILL / "fixtures" / "fail-empty.json")
-    scored = rpc(new_cmd, [
+    scored = rpc(cmd, [
         {"method": "tools/call", "params": {"name": "rigds_satori_score", "arguments": {"path": pass_path}}},
         {"method": "tools/call", "params": {"name": "rigds_satori_score", "arguments": {"path": fail_path}}},
-    ], env=new_env)
+    ], env=env)
     ok = scored["tools/call:2"]
     bad = scored["tools/call:3"]
     if ok.get("result", {}).get("isError"):
@@ -137,7 +125,7 @@ def main():
         raise SystemExit(f"FAIL empty fixture isError false: {text_of(bad)}")
     if not text_of(bad).startswith("FAIL:"):
         raise SystemExit(f"FAIL empty fixture text: {text_of(bad)}")
-    print("PASS contract: 6-tool parity + satori PASS/FAIL isError")
+    print("PASS contract: fixture six-tool schemas + satori PASS/FAIL isError")
 
 
 if __name__ == "__main__":
