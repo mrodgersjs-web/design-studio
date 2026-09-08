@@ -14,8 +14,8 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-NEW = ROOT / "rigds_mcp.py"
-SKILL = ROOT.parent / "skills" / "rig-design-studio-satori-apple"
+REPO = ROOT.parent
+SKILL = REPO / "skills" / "rig-design-studio-satori-apple"
 CORE = [
     "rigds_missions",
     "rigds_ledger",
@@ -26,13 +26,14 @@ CORE = [
 ]
 
 
-def rpc(cmd, calls, timeout=8):
+def rpc(cmd, calls, timeout=8, env=None):
     proc = subprocess.Popen(
         cmd,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        env=env,
     )
     out = []
     try:
@@ -80,11 +81,14 @@ def text_of(msg):
 
 
 def main():
+    import os
     old_cmd = ["rigds-mcp"]
-    new_cmd = [sys.executable, str(NEW)]
+    new_cmd = [sys.executable, "-m", "rigds_mcp.server"]
+    new_env = dict(os.environ)
+    new_env["PYTHONPATH"] = str(REPO) + (os.pathsep + new_env["PYTHONPATH"] if new_env.get("PYTHONPATH") else "")
     list_call = [{"method": "tools/list"}]
     old = rpc(old_cmd, list_call)
-    new = rpc(new_cmd, list_call)
+    new = rpc(new_cmd, list_call, env=new_env)
     old_tools = tool_map(old["tools/list:2"])
     new_tools = tool_map(new["tools/list:2"])
     missing = [n for n in CORE if n not in new_tools]
@@ -101,7 +105,7 @@ def main():
         raise SystemExit("FAIL missing satori tools")
 
     engine_old = rpc(old_cmd, [{"method": "tools/call", "params": {"name": "rigds_engine", "arguments": {}}}])
-    engine_new = rpc(new_cmd, [{"method": "tools/call", "params": {"name": "rigds_engine", "arguments": {}}}])
+    engine_new = rpc(new_cmd, [{"method": "tools/call", "params": {"name": "rigds_engine", "arguments": {}}}], env=new_env)
     old_txt = text_of(engine_old["tools/call:2"])
     new_txt = text_of(engine_new["tools/call:2"])
     if engine_new["tools/call:2"].get("result", {}).get("isError"):
@@ -109,7 +113,7 @@ def main():
     if json.loads(old_txt) != json.loads(new_txt):
         raise SystemExit(f"FAIL engine parity\nOLD {old_txt[:400]}\nNEW {new_txt[:400]}")
 
-    compose_new = rpc(new_cmd, [{"method": "tools/call", "params": {"name": "rigds_compose", "arguments": {"preset": "converter"}}}])
+    compose_new = rpc(new_cmd, [{"method": "tools/call", "params": {"name": "rigds_compose", "arguments": {"preset": "converter"}}}], env=new_env)
     compose_txt = text_of(compose_new["tools/call:2"])
     compose_obj = json.loads(compose_txt)
     if compose_obj.get("error") or compose_new["tools/call:2"].get("result", {}).get("isError"):
@@ -122,7 +126,7 @@ def main():
     scored = rpc(new_cmd, [
         {"method": "tools/call", "params": {"name": "rigds_satori_score", "arguments": {"path": pass_path}}},
         {"method": "tools/call", "params": {"name": "rigds_satori_score", "arguments": {"path": fail_path}}},
-    ])
+    ], env=new_env)
     ok = scored["tools/call:2"]
     bad = scored["tools/call:3"]
     if ok.get("result", {}).get("isError"):

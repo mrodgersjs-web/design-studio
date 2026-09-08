@@ -10,11 +10,9 @@ requires-python = ">=3.10"
 readme = "README.md"
 
 [project.scripts]
-rigds-mcp = "rigds_mcp:main"
+rigds-mcp = "rigds_mcp.server:main"
 
-[tool.setuptools]
-py-modules = ["rigds_mcp"]
-include-package-data = true
-
-[tool.setuptools.package-dir]
-"" = "mcp"
+[tool.setuptools.packages.find]
+include = ["rigds_mcp*"]
+[tool.setuptools.package-data]
+rigds_mcp = ["references/SECTION-CATALOG.md", "scorecard.py"]

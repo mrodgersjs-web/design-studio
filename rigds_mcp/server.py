@@ -13,13 +13,12 @@ import re
 import subprocess
 import sys
 import urllib.request
+from importlib.resources import as_file, files as pkg_files
 from pathlib import Path
 
 PROTOCOL = "2024-11-05"
 STR = {"type": "string"}
-HERE = Path(__file__).resolve().parent
-SKILL_ROOT = HERE.parent / "skills" / "rig-design-studio-satori-apple"
-CATALOG = HERE / "references" / "SECTION-CATALOG.md"
+_REPO_SKILL = Path(__file__).resolve().parent.parent / "skills" / "rig-design-studio-satori-apple"
 
 CORE_TOOLS = [
     {"name": "rigds_missions", "description": "List design-studio missions with their criteria ledgers.",
@@ -88,7 +87,7 @@ def ledger(root, mission, n=5):
 
 
 def compose(preset, slot_overrides):
-    txt = open(CATALOG).read() if CATALOG.is_file() else ""
+    txt = pkg_files("rigds_mcp").joinpath("references", "SECTION-CATALOG.md").read_text(encoding="utf-8")
     presets = {}
     for m in re.finditer(r"- \*\*(\w+)\*\*[^:]*: (.+?)(?=\n- \*\*|\n## |\Z)", txt, re.S):
         presets[m.group(1)] = [s.strip() for s in m.group(2).replace("→", ">").split(">") if s.strip()]
@@ -125,7 +124,10 @@ def engine_status(root):
 
 
 def satori_root() -> Path:
-    return Path(os.environ.get("RIGDS_SATORI_ROOT", str(SKILL_ROOT)))
+    env = os.environ.get("RIGDS_SATORI_ROOT")
+    if env:
+        return Path(env)
+    return _REPO_SKILL
 
 
 def _is_error(text: str) -> bool:
@@ -141,21 +143,20 @@ def call(name, args):
         root = satori_root()
         skill = root / "SKILL.md"
         return json.dumps({
-            "root": str(root),
+            "root": str(root) if skill.is_file() else None,
             "skill": str(skill) if skill.is_file() else None,
             "version": "0.1.0",
             "attribution": "unverified-seed",
             "install": "npx skills add mrodgersjs-web/design-studio --skill rig-design-studio-satori-apple",
-            "scorecard": str(root / "scripts" / "scorecard.py"),
+            "scorecard": "package:rigds_mcp/scorecard.py",
         }, indent=1)
     if name == "rigds_satori_score":
         scorecard = args.get("path", "")
-        script = satori_root() / "scripts" / "scorecard.py"
-        if not script.is_file():
-            return f"FAIL: scorecard script missing at {script}"
         if not scorecard:
             return "FAIL: path is required"
-        proc = subprocess.run([sys.executable, str(script), scorecard], capture_output=True, text=True)
+        script_ref = pkg_files("rigds_mcp").joinpath("scorecard.py")
+        with as_file(script_ref) as script:
+            proc = subprocess.run([sys.executable, str(script), scorecard], capture_output=True, text=True)
         out = ((proc.stdout or "") + (proc.stderr or "")).strip()
         if proc.returncode != 0 and not out.startswith("FAIL:"):
             return f"FAIL: scorecard exit {proc.returncode}: {out or 'no output'}"
