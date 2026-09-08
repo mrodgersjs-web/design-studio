@@ -16,7 +16,6 @@ Reference. Facts only. Version stays 0.1.0.
 - timestamps: 00:02:26-00:03:26
 - claim: a logo is a memory hook in a larger brand system, not a mark that must say everything the brand does
 - retrieval: user-supplied Recall card `5f8b7edc-120b-40da-93d4-04ef00345794`
-- local_path: `/Users/rig128gb/Documents/JakeStudio/Imports/Recall/Cards/5f8b7edc-120b-40da-93d4-04ef00345794.md`
 - permission: user-owned saved card. Do not republish the transcript in this repo.
 - status: verified for this claim only
 
