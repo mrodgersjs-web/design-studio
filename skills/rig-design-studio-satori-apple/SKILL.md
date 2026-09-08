@@ -4,9 +4,8 @@ version: 0.1.0
 source: "references/seed-v0.1.md (authored v0.1 seed). Channel URL only: https://www.youtube.com/@SatoriGraphics. Lesson-level Satori/Apple attribution is unverified until the corpus ledger has URL+timestamp evidence."
 github: mrodgersjs-web/design-studio
 install: >
-  Canonical checkout: /Users/rig128gb/Developer/RIGForge/repos/rig-design-studio
-  Run skills/rig-design-studio-satori-apple/install.sh, or:
-  npx skills add mrodgersjs-web/design-studio@rig-design-studio-satori-apple
+  npx skills add mrodgersjs-web/design-studio --skill rig-design-studio-satori-apple
+  skills use: npx skills use mrodgersjs-web/design-studio@rig-design-studio-satori-apple
 description: >
   Communication-first product design director for RIG Design Studio.
   Turns Satori Graphics lessons into scored design behavior, not style imitation.

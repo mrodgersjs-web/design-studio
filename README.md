@@ -15,6 +15,7 @@ Shows design discipline next to systems work: clear tokens, component contracts,
 ```bash
 git clone https://github.com/mrodgersjs-web/design-studio.git
 cd design-studio && bash scripts/smoke.sh
+npx skills add mrodgersjs-web/design-studio --skill rig-design-studio-satori-apple
 ```
 
 ## Architecture
