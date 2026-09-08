@@ -1,0 +1,11 @@
+{
+  "artifact": "proof/artifact.html",
+  "decision_ledger": "proof/ledger.md",
+  "accessibility_report": "proof/a11y.md",
+  "unresolved_risks": "proof/risks.md",
+  "responsive_screenshots": ["proof/shot-1440.png"],
+  "generator": "design-agent",
+  "verifier": "design-verifier",
+  "scores": {},
+  "applicable": []
+}
