@@ -1,0 +1,4 @@
+include rigds_mcp/references/SECTION-CATALOG.md
+include rigds_mcp/scorecard.py
+include mcp/test_contract.py
+include mcp/test_wheel.py

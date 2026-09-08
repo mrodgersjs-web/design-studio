@@ -1,0 +1,40 @@
+[
+  {
+    "name": "rigds_missions",
+    "description": "List design-studio missions with their criteria ledgers.",
+    "inputSchema": {"type": "object", "properties": {}}
+  },
+  {
+    "name": "rigds_ledger",
+    "description": "Read the last N round rows from a mission's CRITERIA ledger.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {"mission": {"type": "string"}, "n": {"type": "integer"}},
+      "required": ["mission"]
+    }
+  },
+  {
+    "name": "rigds_compose",
+    "description": "Emit a section-composition manifest from the 54-variant catalog (presets: converter, flagship, organic; optional slot overrides).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {"preset": {"type": "string"}, "slots": {"type": "object"}},
+      "required": ["preset"]
+    }
+  },
+  {
+    "name": "rigds_artifacts",
+    "description": "List studio artifact HTML files (optionally per mission).",
+    "inputSchema": {"type": "object", "properties": {"mission": {"type": "string"}}}
+  },
+  {
+    "name": "rigds_engine",
+    "description": "Design-quality engine status: loop/gate/ledger/providers (import-verified).",
+    "inputSchema": {"type": "object", "properties": {}}
+  },
+  {
+    "name": "rigds_backend",
+    "description": "Studio backend health + live funnel stats (:8744).",
+    "inputSchema": {"type": "object", "properties": {}}
+  }
+]

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rigds-mcp"
+version = "1.1.0"
+description = "RIG Design Studio MCP server (stdio, newline JSON-RPC)"
+requires-python = ">=3.10"
+readme = "README.md"
+
+[project.scripts]
+rigds-mcp = "rigds_mcp.server:main"
+
+[tool.setuptools.packages.find]
+include = ["rigds_mcp*"]
+[tool.setuptools.package-data]
+rigds_mcp = ["references/SECTION-CATALOG.md", "scorecard.py"]
