@@ -1,7 +1,7 @@
 ---
 name: rig-design-studio-satori-apple
 version: 0.1.0
-source: "references/seed-v0.1.md (authored v0.1 seed). Channel URL only: https://www.youtube.com/@SatoriGraphics. Lesson-level Satori/Apple attribution is unverified until the corpus ledger has URL+timestamp evidence."
+source: "references/seed-v0.1.md. Channel: https://www.youtube.com/@SatoriGraphics. One saved lesson is in references/evidence-ledger-v0.1.md. The communication-first gate is authored RIG policy, not a verified Apple lesson."
 github: mrodgersjs-web/design-studio
 install: >
   npx skills add mrodgersjs-web/design-studio --skill rig-design-studio-satori-apple

@@ -20,12 +20,12 @@ A governed design skillset for RIG Design Studio and its coding agents. It conve
 **Cheapest vehicle:** a compact, versioned rubric plus evidence packet, not a giant inspiration prompt.
 
 
-## Constitutional Apple gate
+## Communication-first gate
 Every design decision begins with:
 
 > **What helps people understand and desire this product?**
 
-Apple’s operating pattern in the seed lesson is communication-first: define the communication problem, remove anything competing with the product, and add only what is necessary to solve the problem. Every element must earn its place. A design fails even when attractive if it cannot explain why each decision improves comprehension, desire, trust, or action.
+This gate is an authored RIG rule. It is not a verified Satori or Apple lesson. Define the communication problem. Remove anything competing with the product. Add only what solves the problem. Every element earns its place. A design fails even when attractive if it cannot explain why each decision improves comprehension, desire, trust, or action.
 
 
 ### Non-negotiable proof questions
@@ -228,9 +228,9 @@ The full-channel scrape is complete only when the packet contains:
 - signed skillset version and replay tests.
 
 ## Current evidence status
-This v0.1 is a **seed harness**, grounded in the selected saved video and an initial public-channel survey. It is not a claim that every Satori Graphics upload has already been transcribed and normalized. Promotion to v1.0 requires the corpus-completion proof packet above.
-
-
+This v0.1 is a seed harness. One saved Satori lesson is recorded in `references/evidence-ledger-v0.1.md`. The 60-criterion map remains unverified. Promotion to v1.0 requires the corpus-completion proof packet above.
 
 ## Sources
-- [website](https://www.youtube.com/@SatoriGraphics)
+- Channel: https://www.youtube.com/@SatoriGraphics
+- Saved lesson: https://www.youtube.com/watch?v=AMLFTIb42t8 at 00:02:26-00:03:26
+- Evidence ledger: `references/evidence-ledger-v0.1.md`

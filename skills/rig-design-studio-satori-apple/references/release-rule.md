@@ -14,7 +14,7 @@ GATE ids: **1, 2, 3, 4, 11, 21, 31, 41, 51**.
 The generator cannot declare completion. `termination_authority: independent_design_verifier`.
 
 ## v0.1 seed status
-Authored source: `references/seed-v0.1.md`. Channel URL only: https://www.youtube.com/@SatoriGraphics. The seed names a selected saved video but does not record its URL or timestamps. Criterion-to-lesson attribution is **unverified**. Do not claim verified Satori or Apple grounding until the corpus ledger supplies exact URL+timestamp evidence. Design runs use the seed rubric; corpus work is `workflows/corpus.md`.
+Authored source: `references/seed-v0.1.md`. Channel: https://www.youtube.com/@SatoriGraphics. One saved lesson is in `references/evidence-ledger-v0.1.md`. The communication-first gate is an authored RIG rule, not a verified Apple lesson. Do not cite other Satori claims as verified without a ledger row. Design runs use the seed rubric. Corpus work is `workflows/corpus.md`.
 
 ## Corpus-completion packet (v1.0 only)
 Promotion to v1.0 requires:
@@ -45,4 +45,4 @@ Use when the agent needs a bounded practice, not as a substitute for the scoreca
 ## Source
 - Authored seed: `references/seed-v0.1.md`
 - Channel: https://www.youtube.com/@SatoriGraphics
-- Per-lesson timestamps: none in v0.1
+- Evidence ledger: `references/evidence-ledger-v0.1.md`
