@@ -1,0 +1,2 @@
+include mcp/references/SECTION-CATALOG.md
+include mcp/test_contract.py

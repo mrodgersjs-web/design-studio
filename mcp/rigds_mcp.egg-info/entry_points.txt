@@ -1,0 +1,2 @@
+[console_scripts]
+rigds-mcp = rigds_mcp:main
