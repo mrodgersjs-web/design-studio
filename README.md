@@ -7,6 +7,7 @@
 
 ![status](https://img.shields.io/badge/status-public-studio-blue)
 ![license](https://img.shields.io/badge/license-MIT-green)
+[![smoke CI](https://img.shields.io/github/actions/workflow/status/mrodgersjs-web/design-studio/smoke.yml?branch=main)](https://github.com/mrodgersjs-web/design-studio/actions/workflows/smoke.yml)
 
 ## Employer summary
 Shows design discipline next to systems work: clear tokens, component contracts, and a review checklist used when embedding with customers.
