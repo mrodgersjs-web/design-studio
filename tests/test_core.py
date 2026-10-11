@@ -9,6 +9,7 @@ tool call does not kill the server.
 """
 from __future__ import annotations
 
+import builtins
 import copy
 import json
 import os
@@ -340,6 +341,116 @@ def test_ledger_rejects_symlink_escape(studio):
     link = studio / "missions" / "linked-ledger"
     link.symlink_to(outside, target_is_directory=True)
     assert server.ledger(str(studio), "linked-ledger", 1) == {"error": "mission path escapes studio root: 'linked-ledger'"}
+
+
+
+def assert_no_outside_scandir_or_open(monkeypatch, root: Path, outside: Path):
+    real_root = root.resolve()
+    real_scandir = server.os.scandir
+    real_open = builtins.open
+    seen = {"scandir": [], "open": []}
+
+    def is_outside(path):
+        try:
+            Path(path).resolve().relative_to(real_root)
+            return False
+        except ValueError:
+            return True
+
+    def guard_scandir(path):
+        seen["scandir"].append(Path(path).resolve())
+        if is_outside(path):
+            raise AssertionError(f"outside scandir attempted: {path}")
+        return real_scandir(path)
+
+    def guard_open(path, *args, **kwargs):
+        if isinstance(path, (str, os.PathLike)):
+            seen["open"].append(Path(path).resolve())
+            if is_outside(path):
+                raise AssertionError(f"outside read attempted: {path}")
+        return real_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(server.os, "scandir", guard_scandir)
+    monkeypatch.setattr(builtins, "open", guard_open)
+    return seen
+
+
+def test_ledger_rejects_symlinked_missions_root_without_outside_scan_or_read(tmp_path, monkeypatch):
+    root = tmp_path / "studio"
+    root.mkdir()
+    outside = tmp_path / "outside-missions"
+    (outside / "alpha").mkdir(parents=True)
+    (outside / "alpha" / "CRITERIA-alpha.md").write_text("| r1 | PRIVATE-FIXTURE |\n")
+    (root / "missions").symlink_to(outside, target_is_directory=True)
+    seen = assert_no_outside_scandir_or_open(monkeypatch, root, outside)
+    assert server.ledger(str(root), "alpha", 1) == {"error": "missions path escapes studio root"}
+    assert seen == {"scandir": [], "open": []}
+
+
+def test_artifacts_rejects_symlinked_missions_root_without_outside_scan(tmp_path, monkeypatch):
+    root = tmp_path / "studio"
+    root.mkdir()
+    outside = tmp_path / "outside-missions"
+    (outside / "alpha" / "artifacts").mkdir(parents=True)
+    (outside / "alpha" / "artifacts" / "PRIVATE-FIXTURE.html").write_text("private")
+    (root / "missions").symlink_to(outside, target_is_directory=True)
+    seen = assert_no_outside_scandir_or_open(monkeypatch, root, outside)
+    assert server.artifacts(str(root), "alpha") == {"error": "missions path escapes studio root"}
+    assert seen == {"scandir": [], "open": []}
+
+
+def test_artifacts_rejects_artifacts_dir_symlink_without_outside_scan(studio, monkeypatch):
+    outside = studio.parent / "outside-artifacts"
+    outside.mkdir()
+    (outside / "PRIVATE-FIXTURE.html").write_text("private")
+    artifacts = studio / "missions" / "alpha" / "artifacts"
+    (artifacts / "r1" / "index.html").unlink()
+    (artifacts / "r1").rmdir()
+    (artifacts / "notes.txt").unlink()
+    artifacts.rmdir()
+    artifacts.symlink_to(outside, target_is_directory=True)
+    seen = assert_no_outside_scandir_or_open(monkeypatch, studio, outside)
+    assert server.artifacts(str(studio), "alpha") == {"error": "artifact path escapes studio root"}
+    assert seen == {"scandir": [], "open": []}
+
+
+def test_artifacts_rejects_nested_dir_symlink_before_descent(studio, monkeypatch):
+    outside = studio.parent / "outside-nested"
+    outside.mkdir()
+    (outside / "PRIVATE-FIXTURE.html").write_text("private")
+    nested = studio / "missions" / "alpha" / "artifacts" / "r1" / "outside-link"
+    nested.symlink_to(outside, target_is_directory=True)
+    seen = assert_no_outside_scandir_or_open(monkeypatch, studio, outside)
+    assert server.artifacts(str(studio), "alpha") == {"error": "artifact path escapes studio root"}
+    assert all(not p.is_relative_to(outside.resolve()) for p in seen["scandir"])
+    assert seen["open"] == []
+
+
+def test_artifacts_rejects_html_file_symlink(studio, monkeypatch):
+    outside = studio.parent / "outside-file"
+    outside.mkdir()
+    private = outside / "PRIVATE-FIXTURE.html"
+    private.write_text("private")
+    link = studio / "missions" / "alpha" / "artifacts" / "r1" / "linked.html"
+    link.symlink_to(private)
+    seen = assert_no_outside_scandir_or_open(monkeypatch, studio, outside)
+    assert server.artifacts(str(studio), "alpha") == {"error": "artifact path escapes studio root"}
+    assert all(not p.is_relative_to(outside.resolve()) for p in seen["scandir"])
+    assert seen["open"] == []
+
+
+def test_ledger_rejects_criteria_file_symlink_without_outside_read(studio, monkeypatch):
+    outside = studio.parent / "outside-ledger-file"
+    outside.mkdir()
+    private = outside / "PRIVATE-CRITERIA.md"
+    private.write_text("| r1 | PRIVATE-FIXTURE |\n")
+    criteria = studio / "missions" / "alpha" / "CRITERIA-alpha.md"
+    criteria.unlink()
+    criteria.symlink_to(private)
+    seen = assert_no_outside_scandir_or_open(monkeypatch, studio, outside)
+    assert server.ledger(str(studio), "alpha", 1) == {"error": "ledger path escapes studio root"}
+    assert all(not p.is_relative_to(outside.resolve()) for p in seen["scandir"])
+    assert seen["open"] == []
 
 def test_ledger_missing_criteria(studio):
     assert server.ledger(str(studio), "beta", 5) == {"error": "no CRITERIA in beta"}

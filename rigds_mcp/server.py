@@ -61,11 +61,24 @@ def studio_root():
 
 
 def missions(root):
+    root_real = _root_real(root)
+    missions_dir = Path(root, "missions")
+    if not _under(missions_dir, root_real):
+        return {"error": "missions path escapes studio root"}
     ms = []
-    for d in sorted(glob.glob(os.path.join(root, "missions", "*/"))):
-        crit = glob.glob(os.path.join(d, "CRITERIA-*.md"))
-        ms.append({"mission": os.path.basename(d.rstrip("/")),
-                   "criteria": os.path.basename(crit[0]) if crit else None})
+    if not missions_dir.exists() or missions_dir.is_symlink():
+        return ms
+    for entry in sorted(os.scandir(missions_dir), key=lambda e: e.name):
+        if entry.is_symlink() or not entry.is_dir(follow_symlinks=False):
+            continue
+        mission_dir = Path(entry.path)
+        if not _under(mission_dir, root_real):
+            continue
+        crit = [c.name for c in sorted(os.scandir(mission_dir), key=lambda e: e.name)
+                if not c.is_symlink() and c.is_file(follow_symlinks=False)
+                and c.name.startswith("CRITERIA-") and c.name.endswith(".md")
+                and _under(Path(c.path), root_real)]
+        ms.append({"mission": entry.name, "criteria": crit[0] if crit else None})
     return ms
 
 
@@ -76,9 +89,13 @@ def _bad_mission(mission):
             or os.path.isabs(mission))
 
 
-def _contained(path, base):
+def _root_real(root):
+    return Path(root).resolve()
+
+
+def _under(path, boundary):
     try:
-        Path(path).resolve().relative_to(Path(base).resolve())
+        Path(path).resolve().relative_to(boundary)
         return True
     except (OSError, ValueError):
         return False
@@ -86,37 +103,68 @@ def _contained(path, base):
 
 def _mission_dir(root, mission):
     if _bad_mission(mission):
-        return None, {"error": f"invalid mission name {mission!r}"}
+        return None, None, {"error": f"invalid mission name {mission!r}"}
+    root_real = _root_real(root)
     missions_dir = Path(root, "missions")
-    base = missions_dir / mission
-    if not _contained(base, missions_dir):
-        return None, {"error": f"mission path escapes studio root: {mission!r}"}
-    return base, None
+    if not _under(missions_dir, root_real):
+        return None, None, {"error": "missions path escapes studio root"}
+    mission_dir = missions_dir / mission
+    if not _under(mission_dir, root_real):
+        return None, None, {"error": f"mission path escapes studio root: {mission!r}"}
+    return mission_dir, root_real, None
+
+
+def _list_html_nofollow(base, root, root_real):
+    if not _under(base, root_real):
+        return None, {"error": "artifact path escapes studio root"}
+    if not Path(base).exists():
+        return [], None
+    if Path(base).is_symlink():
+        return None, {"error": "artifact path escapes studio root"}
+    out = []
+    stack = [Path(base)]
+    while stack and len(out) < 60:
+        current = stack.pop()
+        if not _under(current, root_real):
+            return None, {"error": "artifact path escapes studio root"}
+        try:
+            entries = sorted(os.scandir(current), key=lambda e: e.name)
+        except FileNotFoundError:
+            continue
+        for entry in entries:
+            entry_path = Path(entry.path)
+            if entry.is_symlink():
+                return None, {"error": "artifact path escapes studio root"}
+            if entry.is_dir(follow_symlinks=False):
+                if not _under(entry_path, root_real):
+                    return None, {"error": "artifact path escapes studio root"}
+                stack.append(entry_path)
+            elif entry.is_file(follow_symlinks=False) and entry.name.endswith(".html"):
+                if not _under(entry_path, root_real):
+                    return None, {"error": "artifact path escapes studio root"}
+                out.append(os.path.relpath(entry_path, root))
+                if len(out) >= 60:
+                    break
+    return sorted(out), None
 
 
 def artifacts(root, mission=None):
-    root_path = Path(root)
+    root_real = _root_real(root)
     if mission is not None:
-        mission_dir, err = _mission_dir(root, mission)
+        mission_dir, root_real, err = _mission_dir(root, mission)
         if err:
             return err
         base = mission_dir / "artifacts"
     else:
-        base = root_path / "missions"
-    if not _contained(base, root_path):
-        return {"error": "artifact path escapes studio root"}
-    out = []
-    for item in sorted(glob.glob(str(base / "**" / "*.html"), recursive=True)):
-        if not _contained(item, root_path) or not _contained(item, base):
+        base = Path(root, "missions")
+        if not _under(base, root_real):
             return {"error": "artifact path escapes studio root"}
-        out.append(os.path.relpath(item, root))
-        if len(out) >= 60:
-            break
-    return out
+    out, err = _list_html_nofollow(base, root, root_real)
+    return err or out
 
 
 def ledger(root, mission, n=5):
-    mission_dir, err = _mission_dir(root, mission)
+    mission_dir, root_real, err = _mission_dir(root, mission)
     if err:
         return err
     try:
@@ -125,10 +173,24 @@ def ledger(root, mission, n=5):
         return {"error": f"n must be an integer, got {n!r}"}
     if n < 0:
         return {"error": f"n must be >= 0, got {n}"}
-    crit = sorted(glob.glob(str(mission_dir / "CRITERIA-*.md")))
-    for item in crit:
-        if not _contained(item, mission_dir):
+    if not mission_dir.exists():
+        return {"error": f"no CRITERIA in {mission}"}
+    if mission_dir.is_symlink() or not _under(mission_dir, root_real):
+        return {"error": f"mission path escapes studio root: {mission!r}"}
+    crit = []
+    try:
+        entries = sorted(os.scandir(mission_dir), key=lambda e: e.name)
+    except FileNotFoundError:
+        entries = []
+    for entry in entries:
+        if not entry.name.startswith("CRITERIA-") or not entry.name.endswith(".md"):
+            continue
+        if entry.is_symlink():
             return {"error": "ledger path escapes studio root"}
+        entry_path = Path(entry.path)
+        if not entry.is_file(follow_symlinks=False) or not _under(entry_path, root_real):
+            return {"error": "ledger path escapes studio root"}
+        crit.append(entry_path)
     if not crit:
         return {"error": f"no CRITERIA in {mission}"}
     lines = open(crit[0]).read().splitlines()
