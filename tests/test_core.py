@@ -489,7 +489,12 @@ def test_stdio_engine_status_with_and_without_engine(tmp_path):
 
 
 def test_console_script_entrypoint_is_wired():
-    import tomllib
+    # Read the installed package metadata (stdlib importlib.metadata, Python >= 3.10)
+    # rather than parsing pyproject.toml: tomllib only exists on 3.11+, and the
+    # installed entry point is what `rigds-mcp` actually runs.
+    from importlib.metadata import entry_points
 
-    scripts = tomllib.loads((REPO / "pyproject.toml").read_text())["project"]["scripts"]
-    assert scripts == {"rigds-mcp": "rigds_mcp.server:main"}
+    eps = [ep for ep in entry_points(group="console_scripts") if ep.name == "rigds-mcp"]
+    assert len(eps) == 1, eps
+    assert eps[0].value == "rigds_mcp.server:main"
+    assert eps[0].load() is server.main
