@@ -78,21 +78,32 @@ def artifacts(root, mission=None):
 
 
 def ledger(root, mission, n=5):
+    if not isinstance(mission, str) or not mission or mission in (".", "..") or "/" in mission or "\\" in mission:
+        return {"error": f"invalid mission name {mission!r}"}
+    try:
+        n = int(n)
+    except (TypeError, ValueError):
+        return {"error": f"n must be an integer, got {n!r}"}
+    if n < 0:
+        return {"error": f"n must be >= 0, got {n}"}
     crit = glob.glob(os.path.join(root, "missions", mission, "CRITERIA-*.md"))
     if not crit:
         return {"error": f"no CRITERIA in {mission}"}
     lines = open(crit[0]).read().splitlines()
     rows = [l for l in lines if l.startswith("| ") and ("r" in l[:6] or "i" in l[:6])]
-    return {"mission": mission, "rounds_shown": rows[-n:], "total_rows": len(rows)}
+    return {"mission": mission, "rounds_shown": rows[-n:] if n else [], "total_rows": len(rows)}
 
 
 def compose(preset, slot_overrides):
     txt = pkg_files("rigds_mcp").joinpath("references", "SECTION-CATALOG.md").read_text(encoding="utf-8")
     presets = {}
     for m in re.finditer(r"- \*\*(\w+)\*\*[^:]*: (.+?)(?=\n- \*\*|\n## |\Z)", txt, re.S):
-        presets[m.group(1)] = [s.strip() for s in m.group(2).replace("→", ">").split(">") if s.strip()]
+        steps = (s.strip().rstrip(".").strip() for s in m.group(2).replace("→", ">").split(">"))
+        presets[m.group(1)] = [s for s in steps if s]
     if preset not in presets:
         return {"error": f"unknown preset {preset!r}", "available": sorted(presets)}
+    if slot_overrides is not None and not isinstance(slot_overrides, dict):
+        return {"error": "slots must be an object mapping slot to variant"}
     stack = presets[preset]
     for slot, variant in (slot_overrides or {}).items():
         stack = [f"{slot}:{variant}" if s.startswith(slot) or s.startswith(variant.split("-")[0]) else s for s in stack]
@@ -131,11 +142,17 @@ def satori_root() -> Path:
 
 
 def _is_error(text: str) -> bool:
-    return (
+    if (
         text.startswith("STUDIO ROOT NOT FOUND")
         or text.startswith("FAIL:")
         or "unknown tool" in text
-    )
+    ):
+        return True
+    try:
+        obj = json.loads(text)
+    except ValueError:
+        return False
+    return isinstance(obj, dict) and bool(obj.get("error"))
 
 
 def call(name, args):
@@ -152,8 +169,8 @@ def call(name, args):
         }, indent=1)
     if name == "rigds_satori_score":
         scorecard = args.get("path", "")
-        if not scorecard:
-            return "FAIL: path is required"
+        if not isinstance(scorecard, str) or not scorecard:
+            return "FAIL: path is required (string)"
         script_ref = pkg_files("rigds_mcp").joinpath("scorecard.py")
         with as_file(script_ref) as script:
             proc = subprocess.run([sys.executable, str(script), scorecard], capture_output=True, text=True)
@@ -167,7 +184,7 @@ def call(name, args):
     if name == "rigds_missions":
         return json.dumps(missions(root), indent=1)
     if name == "rigds_ledger":
-        return json.dumps(ledger(root, args.get("mission", ""), int(args.get("n", 5))), indent=1)
+        return json.dumps(ledger(root, args.get("mission", ""), args.get("n", 5)), indent=1)
     if name == "rigds_compose":
         return json.dumps(compose(args.get("preset", "converter"), args.get("slots")), indent=1)
     if name == "rigds_artifacts":
@@ -193,6 +210,8 @@ def main():
             msg = json.loads(line)
         except json.JSONDecodeError:
             continue
+        if not isinstance(msg, dict):
+            continue
         mid, method = msg.get("id"), msg.get("method", "")
         if method == "initialize":
             send({"jsonrpc": "2.0", "id": mid, "result": {"protocolVersion": PROTOCOL,
@@ -204,9 +223,16 @@ def main():
         elif method == "tools/list":
             send({"jsonrpc": "2.0", "id": mid, "result": {"tools": TOOLS}})
         elif method == "tools/call":
-            name = msg.get("params", {}).get("name", "")
-            args = msg.get("params", {}).get("arguments", {}) or {}
-            text = call(name, args)
+            params = msg.get("params") or {}
+            name = params.get("name", "") if isinstance(params, dict) else ""
+            args = (params.get("arguments") if isinstance(params, dict) else None) or {}
+            if not isinstance(args, dict):
+                text = "FAIL: arguments must be an object"
+            else:
+                try:
+                    text = call(name, args)
+                except Exception as e:  # one bad call must not kill the stdio server
+                    text = f"FAIL: {name} raised {type(e).__name__}: {e}"
             send({"jsonrpc": "2.0", "id": mid, "result": {
                 "content": [{"type": "text", "text": text}],
                 "isError": _is_error(text)}})

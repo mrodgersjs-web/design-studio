@@ -4,20 +4,48 @@ on:
     branches: [main, master]
   pull_request:
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: Install lightweight deps when present
+      - name: Install package and test tools
         run: |
+          python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f pyproject.toml ]; then pip install -e . || true; fi
-          if [ -f package.json ]; then
-            if command -v npm >/dev/null; then npm ci || npm install || true; fi
-          fi
+          pip install -e . pytest ruff
       - name: Smoke
         run: bash scripts/smoke.sh
+      - name: Lint tests
+        run: ruff check tests
+      - name: Behaviour tests (scorecard, compose, studio helpers, stdio server)
+        run: python -m pytest -q tests
+      - name: MCP contract against frozen six-tool fixtures
+        run: python mcp/test_contract.py
+      - name: Wheel install in a clean venv
+        run: python mcp/test_wheel.py
+      - name: Satori attribution guard
+        run: python skills/rig-design-studio-satori-apple/scripts/check_attribution.py
+      - name: Entrypoint smoke (rigds-mcp over stdio on a real scorecard)
+        run: |
+          printf '%s\n' \
+            '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}' \
+            '{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"rigds_satori_score","arguments":{"path":"skills/rig-design-studio-satori-apple/fixtures/pass.json"}}}' \
+            '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"rigds_satori_score","arguments":{"path":"skills/rig-design-studio-satori-apple/fixtures/fail-gate.json"}}}' \
+            | rigds-mcp > smoke-out.jsonl
+          cat smoke-out.jsonl
+          python - <<'PY'
+          import json
+          rows = [json.loads(l) for l in open("smoke-out.jsonl")]
+          assert rows[0]["result"]["serverInfo"]["name"] == "rigds", rows[0]
+          assert rows[1]["result"]["content"][0]["text"] == "PASS", rows[1]
+          assert rows[1]["result"]["isError"] is False, rows[1]
+          assert rows[2]["result"]["content"][0]["text"] == "FAIL: GATE 1 scored 1 < 2", rows[2]
+          assert rows[2]["result"]["isError"] is True, rows[2]
+          print("entrypoint smoke OK")
+          PY

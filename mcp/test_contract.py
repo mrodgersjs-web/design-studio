@@ -11,6 +11,7 @@ import os
 import select
 import subprocess
 import sys
+import tempfile
 import time
 from pathlib import Path
 
@@ -78,10 +79,29 @@ def text_of(msg):
     return (((msg.get("result") or {}).get("content") or [{}])[0]).get("text", "")
 
 
+def make_studio_root(base: Path) -> Path:
+    """Minimal studio tree: missions/<m>/CRITERIA-*.md plus an importable engine package."""
+    root = base / "studio"
+    (root / "missions" / "demo").mkdir(parents=True)
+    (root / "missions" / "demo" / "CRITERIA-demo.md").write_text(
+        "| round | score |\n|---|---|\n| r1 | 0.7 |\n| r2 | 0.9 |\n"
+    )
+    eng = root / "engine"
+    eng.mkdir()
+    for mod in ("__init__", "loop", "governance", "gate"):
+        (eng / f"{mod}.py").write_text("")
+    (eng / "ledger.py").write_text(
+        "class ProvenanceLedger:\n    def read_all(self):\n        return [{'id': 1}, {'id': 2}]\n"
+    )
+    return root
+
+
 def main():
     legacy = {t["name"]: t for t in json.loads(FIXTURE.read_text())}
     cmd = [sys.executable, "-m", "rigds_mcp.server"]
     env = dict(os.environ)
+    if not env.get("RIGDS_ROOT"):
+        env["RIGDS_ROOT"] = str(make_studio_root(Path(tempfile.mkdtemp(prefix="rigds-studio-"))))
     env["PYTHONPATH"] = str(REPO) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
     listed = rpc(cmd, [{"method": "tools/list"}], env=env)
     tools = tool_map(listed["tools/list:2"])
@@ -100,6 +120,8 @@ def main():
     engine_txt = text_of(engine["tools/call:2"])
     if engine["tools/call:2"].get("result", {}).get("isError"):
         raise SystemExit(f"FAIL engine isError: {engine_txt[:400]}")
+    if json.loads(engine_txt).get("ledger_records") is None:
+        raise SystemExit(f"FAIL engine status: {engine_txt[:400]}")
 
     compose = rpc(cmd, [{"method": "tools/call", "params": {"name": "rigds_compose", "arguments": {"preset": "converter"}}}], env=env)
     compose_txt = text_of(compose["tools/call:2"])
