@@ -69,24 +69,66 @@ def missions(root):
     return ms
 
 
+def _bad_mission(mission):
+    """Mission names are single directory names under missions/; reject anything that could escape it."""
+    return (not isinstance(mission, str) or not mission or mission in (".", "..")
+            or "/" in mission or "\\" in mission or glob.has_magic(mission)
+            or os.path.isabs(mission))
+
+
+def _contained(path, base):
+    try:
+        Path(path).resolve().relative_to(Path(base).resolve())
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+def _mission_dir(root, mission):
+    if _bad_mission(mission):
+        return None, {"error": f"invalid mission name {mission!r}"}
+    missions_dir = Path(root, "missions")
+    base = missions_dir / mission
+    if not _contained(base, missions_dir):
+        return None, {"error": f"mission path escapes studio root: {mission!r}"}
+    return base, None
+
+
 def artifacts(root, mission=None):
-    base = os.path.join(root, "missions", mission, "artifacts") if mission else os.path.join(root, "missions")
+    root_path = Path(root)
+    if mission is not None:
+        mission_dir, err = _mission_dir(root, mission)
+        if err:
+            return err
+        base = mission_dir / "artifacts"
+    else:
+        base = root_path / "missions"
+    if not _contained(base, root_path):
+        return {"error": "artifact path escapes studio root"}
     out = []
-    for p in sorted(glob.glob(os.path.join(base, "**", "*.html"), recursive=True))[:60]:
-        out.append(os.path.relpath(p, root))
+    for item in sorted(glob.glob(str(base / "**" / "*.html"), recursive=True)):
+        if not _contained(item, root_path) or not _contained(item, base):
+            return {"error": "artifact path escapes studio root"}
+        out.append(os.path.relpath(item, root))
+        if len(out) >= 60:
+            break
     return out
 
 
 def ledger(root, mission, n=5):
-    if not isinstance(mission, str) or not mission or mission in (".", "..") or "/" in mission or "\\" in mission:
-        return {"error": f"invalid mission name {mission!r}"}
+    mission_dir, err = _mission_dir(root, mission)
+    if err:
+        return err
     try:
         n = int(n)
     except (TypeError, ValueError):
         return {"error": f"n must be an integer, got {n!r}"}
     if n < 0:
         return {"error": f"n must be >= 0, got {n}"}
-    crit = glob.glob(os.path.join(root, "missions", mission, "CRITERIA-*.md"))
+    crit = sorted(glob.glob(str(mission_dir / "CRITERIA-*.md")))
+    for item in crit:
+        if not _contained(item, mission_dir):
+            return {"error": "ledger path escapes studio root"}
     if not crit:
         return {"error": f"no CRITERIA in {mission}"}
     lines = open(crit[0]).read().splitlines()
@@ -208,7 +250,8 @@ def main():
             continue
         try:
             msg = json.loads(line)
-        except json.JSONDecodeError:
+        except (ValueError, RecursionError) as e:  # malformed or pathologically nested line: report and keep serving
+            send({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": f"parse error: {type(e).__name__}"}})
             continue
         if not isinstance(msg, dict):
             continue

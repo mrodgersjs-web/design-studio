@@ -310,6 +310,37 @@ def test_ledger_rejects_path_escaping_mission_names(studio, mission):
     assert out == {"error": f"invalid mission name {mission!r}"}
 
 
+@pytest.mark.parametrize("mission", ["../../victim", "..", "../secret", "/", "/**", "a/b", "a\\b", "", 5])
+def test_artifacts_rejects_path_escaping_mission_names(studio, mission):
+    victim = studio.parent / "victim" / "artifacts"
+    victim.mkdir(parents=True)
+    (victim / "private-report.html").write_text("<html>private</html>")
+    assert server.artifacts(str(studio), mission) == {"error": f"invalid mission name {mission!r}"}
+
+
+def test_artifacts_tool_flags_escape_as_error(studio):
+    text = server.call("rigds_artifacts", {"mission": "../../victim"})
+    assert server._is_error(text)
+    assert "private-report" not in text
+
+
+def test_artifacts_rejects_symlink_escape(studio):
+    outside = studio.parent / "outside"
+    outside.mkdir()
+    (outside / "private.html").write_text("<html>private</html>")
+    link_dir = studio / "missions" / "alpha" / "artifacts" / "linked"
+    link_dir.symlink_to(outside, target_is_directory=True)
+    assert server.artifacts(str(studio), "alpha") == {"error": "artifact path escapes studio root"}
+
+
+def test_ledger_rejects_symlink_escape(studio):
+    outside = studio.parent / "outside-ledger"
+    outside.mkdir()
+    (outside / "CRITERIA-outside.md").write_text("| r9 | leaked |\n")
+    link = studio / "missions" / "linked-ledger"
+    link.symlink_to(outside, target_is_directory=True)
+    assert server.ledger(str(studio), "linked-ledger", 1) == {"error": "mission path escapes studio root: 'linked-ledger'"}
+
 def test_ledger_missing_criteria(studio):
     assert server.ledger(str(studio), "beta", 5) == {"error": "no CRITERIA in beta"}
 
@@ -432,7 +463,9 @@ def test_stdio_survives_malformed_lines_and_bad_calls(tmp_path):
         ],
         {"RIGDS_ROOT": str(studio)},
     )
-    by_id = {m["id"]: m for m in out}
+    parse_errors = [m for m in out if m.get("error", {}).get("code") == -32700]
+    assert parse_errors, out
+    by_id = {m["id"]: m for m in out if m.get("id") is not None}
     assert sorted(by_id) == list(range(1, 11))
     for mid in (1, 2, 3, 4, 5, 7, 8, 9):
         assert by_id[mid]["result"]["isError"] is True, (mid, text(by_id[mid]))
@@ -445,6 +478,14 @@ def test_stdio_survives_malformed_lines_and_bad_calls(tmp_path):
     # the server is still alive and answering after all of the above
     assert by_id[6]["result"]["isError"] is False
     assert json.loads(text(by_id[6]))["rounds_shown"] == ["| r1 | 1 |"]
+
+
+def test_stdio_returns_parse_error_and_survives_deeply_nested_line():
+    # json.loads raises RecursionError (not JSONDecodeError) on this; the server must report it and keep serving.
+    out = run_server(["[" * 100000, {"jsonrpc": "2.0", "id": 9, "method": "ping"}])
+    assert out[0]["error"]["code"] == -32700
+    assert out[0]["id"] is None
+    assert out[1] == {"jsonrpc": "2.0", "id": 9, "result": {}}
 
 
 def test_stdio_satori_score_fixtures_and_missing_file(tmp_path):
