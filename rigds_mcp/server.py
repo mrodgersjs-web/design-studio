@@ -61,38 +61,153 @@ def studio_root():
 
 
 def missions(root):
+    root_real = _root_real(root)
+    missions_dir = Path(root, "missions")
+    if not _under(missions_dir, root_real):
+        return {"error": "missions path escapes studio root"}
     ms = []
-    for d in sorted(glob.glob(os.path.join(root, "missions", "*/"))):
-        crit = glob.glob(os.path.join(d, "CRITERIA-*.md"))
-        ms.append({"mission": os.path.basename(d.rstrip("/")),
-                   "criteria": os.path.basename(crit[0]) if crit else None})
+    if not missions_dir.exists() or missions_dir.is_symlink():
+        return ms
+    for entry in sorted(os.scandir(missions_dir), key=lambda e: e.name):
+        if entry.is_symlink() or not entry.is_dir(follow_symlinks=False):
+            continue
+        mission_dir = Path(entry.path)
+        if not _under(mission_dir, root_real):
+            continue
+        crit = [c.name for c in sorted(os.scandir(mission_dir), key=lambda e: e.name)
+                if not c.is_symlink() and c.is_file(follow_symlinks=False)
+                and c.name.startswith("CRITERIA-") and c.name.endswith(".md")
+                and _under(Path(c.path), root_real)]
+        ms.append({"mission": entry.name, "criteria": crit[0] if crit else None})
     return ms
 
 
-def artifacts(root, mission=None):
-    base = os.path.join(root, "missions", mission, "artifacts") if mission else os.path.join(root, "missions")
+def _bad_mission(mission):
+    """Mission names are single directory names under missions/; reject anything that could escape it."""
+    return (not isinstance(mission, str) or not mission or mission in (".", "..")
+            or "/" in mission or "\\" in mission or glob.has_magic(mission)
+            or os.path.isabs(mission))
+
+
+def _root_real(root):
+    return Path(root).resolve()
+
+
+def _under(path, boundary):
+    try:
+        Path(path).resolve().relative_to(boundary)
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+def _mission_dir(root, mission):
+    if _bad_mission(mission):
+        return None, None, {"error": f"invalid mission name {mission!r}"}
+    root_real = _root_real(root)
+    missions_dir = Path(root, "missions")
+    if not _under(missions_dir, root_real):
+        return None, None, {"error": "missions path escapes studio root"}
+    mission_dir = missions_dir / mission
+    if not _under(mission_dir, root_real):
+        return None, None, {"error": f"mission path escapes studio root: {mission!r}"}
+    return mission_dir, root_real, None
+
+
+def _list_html_nofollow(base, root, root_real):
+    if not _under(base, root_real):
+        return None, {"error": "artifact path escapes studio root"}
+    if not Path(base).exists():
+        return [], None
+    if Path(base).is_symlink():
+        return None, {"error": "artifact path escapes studio root"}
     out = []
-    for p in sorted(glob.glob(os.path.join(base, "**", "*.html"), recursive=True))[:60]:
-        out.append(os.path.relpath(p, root))
-    return out
+    stack = [Path(base)]
+    while stack and len(out) < 60:
+        current = stack.pop()
+        if not _under(current, root_real):
+            return None, {"error": "artifact path escapes studio root"}
+        try:
+            entries = sorted(os.scandir(current), key=lambda e: e.name)
+        except FileNotFoundError:
+            continue
+        for entry in entries:
+            entry_path = Path(entry.path)
+            if entry.is_symlink():
+                return None, {"error": "artifact path escapes studio root"}
+            if entry.is_dir(follow_symlinks=False):
+                if not _under(entry_path, root_real):
+                    return None, {"error": "artifact path escapes studio root"}
+                stack.append(entry_path)
+            elif entry.is_file(follow_symlinks=False) and entry.name.endswith(".html"):
+                if not _under(entry_path, root_real):
+                    return None, {"error": "artifact path escapes studio root"}
+                out.append(os.path.relpath(entry_path, root))
+                if len(out) >= 60:
+                    break
+    return sorted(out), None
+
+
+def artifacts(root, mission=None):
+    root_real = _root_real(root)
+    if mission is not None:
+        mission_dir, root_real, err = _mission_dir(root, mission)
+        if err:
+            return err
+        base = mission_dir / "artifacts"
+    else:
+        base = Path(root, "missions")
+        if not _under(base, root_real):
+            return {"error": "artifact path escapes studio root"}
+    out, err = _list_html_nofollow(base, root, root_real)
+    return err or out
 
 
 def ledger(root, mission, n=5):
-    crit = glob.glob(os.path.join(root, "missions", mission, "CRITERIA-*.md"))
+    mission_dir, root_real, err = _mission_dir(root, mission)
+    if err:
+        return err
+    try:
+        n = int(n)
+    except (TypeError, ValueError):
+        return {"error": f"n must be an integer, got {n!r}"}
+    if n < 0:
+        return {"error": f"n must be >= 0, got {n}"}
+    if not mission_dir.exists():
+        return {"error": f"no CRITERIA in {mission}"}
+    if mission_dir.is_symlink() or not _under(mission_dir, root_real):
+        return {"error": f"mission path escapes studio root: {mission!r}"}
+    crit = []
+    try:
+        entries = sorted(os.scandir(mission_dir), key=lambda e: e.name)
+    except FileNotFoundError:
+        entries = []
+    for entry in entries:
+        if not entry.name.startswith("CRITERIA-") or not entry.name.endswith(".md"):
+            continue
+        if entry.is_symlink():
+            return {"error": "ledger path escapes studio root"}
+        entry_path = Path(entry.path)
+        if not entry.is_file(follow_symlinks=False) or not _under(entry_path, root_real):
+            return {"error": "ledger path escapes studio root"}
+        crit.append(entry_path)
     if not crit:
         return {"error": f"no CRITERIA in {mission}"}
     lines = open(crit[0]).read().splitlines()
     rows = [l for l in lines if l.startswith("| ") and ("r" in l[:6] or "i" in l[:6])]
-    return {"mission": mission, "rounds_shown": rows[-n:], "total_rows": len(rows)}
+    return {"mission": mission, "rounds_shown": rows[-n:] if n else [], "total_rows": len(rows)}
 
 
 def compose(preset, slot_overrides):
     txt = pkg_files("rigds_mcp").joinpath("references", "SECTION-CATALOG.md").read_text(encoding="utf-8")
     presets = {}
     for m in re.finditer(r"- \*\*(\w+)\*\*[^:]*: (.+?)(?=\n- \*\*|\n## |\Z)", txt, re.S):
-        presets[m.group(1)] = [s.strip() for s in m.group(2).replace("→", ">").split(">") if s.strip()]
+        steps = (s.strip().rstrip(".").strip() for s in m.group(2).replace("→", ">").split(">"))
+        presets[m.group(1)] = [s for s in steps if s]
     if preset not in presets:
         return {"error": f"unknown preset {preset!r}", "available": sorted(presets)}
+    if slot_overrides is not None and not isinstance(slot_overrides, dict):
+        return {"error": "slots must be an object mapping slot to variant"}
     stack = presets[preset]
     for slot, variant in (slot_overrides or {}).items():
         stack = [f"{slot}:{variant}" if s.startswith(slot) or s.startswith(variant.split("-")[0]) else s for s in stack]
@@ -131,11 +246,17 @@ def satori_root() -> Path:
 
 
 def _is_error(text: str) -> bool:
-    return (
+    if (
         text.startswith("STUDIO ROOT NOT FOUND")
         or text.startswith("FAIL:")
         or "unknown tool" in text
-    )
+    ):
+        return True
+    try:
+        obj = json.loads(text)
+    except ValueError:
+        return False
+    return isinstance(obj, dict) and bool(obj.get("error"))
 
 
 def call(name, args):
@@ -152,8 +273,8 @@ def call(name, args):
         }, indent=1)
     if name == "rigds_satori_score":
         scorecard = args.get("path", "")
-        if not scorecard:
-            return "FAIL: path is required"
+        if not isinstance(scorecard, str) or not scorecard:
+            return "FAIL: path is required (string)"
         script_ref = pkg_files("rigds_mcp").joinpath("scorecard.py")
         with as_file(script_ref) as script:
             proc = subprocess.run([sys.executable, str(script), scorecard], capture_output=True, text=True)
@@ -167,7 +288,7 @@ def call(name, args):
     if name == "rigds_missions":
         return json.dumps(missions(root), indent=1)
     if name == "rigds_ledger":
-        return json.dumps(ledger(root, args.get("mission", ""), int(args.get("n", 5))), indent=1)
+        return json.dumps(ledger(root, args.get("mission", ""), args.get("n", 5)), indent=1)
     if name == "rigds_compose":
         return json.dumps(compose(args.get("preset", "converter"), args.get("slots")), indent=1)
     if name == "rigds_artifacts":
@@ -191,7 +312,10 @@ def main():
             continue
         try:
             msg = json.loads(line)
-        except json.JSONDecodeError:
+        except (ValueError, RecursionError) as e:  # malformed or pathologically nested line: report and keep serving
+            send({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": f"parse error: {type(e).__name__}"}})
+            continue
+        if not isinstance(msg, dict):
             continue
         mid, method = msg.get("id"), msg.get("method", "")
         if method == "initialize":
@@ -204,9 +328,16 @@ def main():
         elif method == "tools/list":
             send({"jsonrpc": "2.0", "id": mid, "result": {"tools": TOOLS}})
         elif method == "tools/call":
-            name = msg.get("params", {}).get("name", "")
-            args = msg.get("params", {}).get("arguments", {}) or {}
-            text = call(name, args)
+            params = msg.get("params") or {}
+            name = params.get("name", "") if isinstance(params, dict) else ""
+            args = (params.get("arguments") if isinstance(params, dict) else None) or {}
+            if not isinstance(args, dict):
+                text = "FAIL: arguments must be an object"
+            else:
+                try:
+                    text = call(name, args)
+                except Exception as e:  # one bad call must not kill the stdio server
+                    text = f"FAIL: {name} raised {type(e).__name__}: {e}"
             send({"jsonrpc": "2.0", "id": mid, "result": {
                 "content": [{"type": "text", "text": text}],
                 "isError": _is_error(text)}})

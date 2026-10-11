@@ -140,7 +140,14 @@ def main(argv: list[str]) -> int:
         print("usage: scorecard.py <scorecard.json>", file=sys.stderr)
         return 2
     path = Path(argv[1])
-    data = json.loads(path.read_text())
+    try:
+        data = json.loads(path.read_text())
+    except OSError as e:
+        print(f"FAIL: cannot read scorecard {argv[1]}: {e.strerror or e}", file=sys.stderr)
+        return 1
+    except (ValueError, UnicodeDecodeError) as e:
+        print(f"FAIL: scorecard is not valid JSON: {e}", file=sys.stderr)
+        return 1
     if type(data) is not dict:
         print("FAIL: scorecard must be an object", file=sys.stderr)
         return 1

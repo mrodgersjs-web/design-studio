@@ -42,7 +42,7 @@ assert info.get("scorecard") == "package:rigds_mcp/scorecard.py", info
 print("COMPOSE", len(c["stack"]))
 print("SKILL_OK", info["version"])
 """
-        out = run([str(vpy), "-c", probe])
+        out = run([str(vpy), "-c", probe], cwd=str(tmp))
         print(out.strip())
         pass_path = SKILL / "fixtures" / "pass.json"
         fail_path = SKILL / "fixtures" / "fail-empty.json"
@@ -56,10 +56,11 @@ assert bad.startswith("FAIL:"), bad
 print("SCORE_PASS")
 print("SCORE_FAIL")
 """
-        scored = run([str(vpy), "-c", score, str(pass_path), str(fail_path)])
+        scored = run([str(vpy), "-c", score, str(pass_path), str(fail_path)], cwd=str(tmp))
         print(scored.strip())
-        # prove catalog file is inside the venv site-packages, not the source tree
-        loc = run([str(vpy), "-c", "import rigds_mcp, pathlib; print(pathlib.Path(rigds_mcp.__file__).resolve())"])
+        # prove the module is the installed wheel, not the source tree
+        # (cwd=tmp: running from the repo root would put the source tree on sys.path)
+        loc = run([str(vpy), "-c", "import rigds_mcp, pathlib; print(pathlib.Path(rigds_mcp.__file__).resolve())"], cwd=str(tmp))
         loc_p = Path(loc.strip())
         if REPO.resolve() in loc_p.parents or loc_p == REPO.resolve():
             raise SystemExit(f"FAIL wheel import still source tree: {loc_p}")
