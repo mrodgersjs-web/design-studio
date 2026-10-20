@@ -1,6 +1,7 @@
 # design-studio
 
-[![ci](https://github.com/mrodgersjs-web/design-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/mrodgersjs-web/design-studio/actions/workflows/ci.yml)
+
+[![CI](https://img.shields.io/github/actions/workflow/status/mrodgersjs-web/design-studio/ci.yml?branch=main&label=CI)](https://github.com/mrodgersjs-web/design-studio/actions/workflows/ci.yml)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![python](https://img.shields.io/badge/python-3.10%20%7C%203.11%20%7C%203.12%20%7C%203.13-blue.svg)](pyproject.toml)
 
