@@ -98,3 +98,14 @@ def _classify(group, raw_value):
         if HEX3.match(raw_value) or HEX6.match(raw_value) or HEX8.match(raw_value) or RGB_FN.match(raw_value):
             value_kind = "color"
     return group_kind, value_kind
+
+
+def parse_token_object(raw, *, source: str = "<memory>"):
+    if not isinstance(raw, dict):
+        raise TokenError(
+            f"{source}: top-level must be a JSON object; got {type(raw).__name__}"
+        )
+    schema = raw.get("$schema") if isinstance(raw.get("$schema"), str) else None
+    tokens: list = []
+    _walk(raw, prefix="", out=tokens, source=source)
+    return TokenFile(schema=schema, tokens=tokens)
