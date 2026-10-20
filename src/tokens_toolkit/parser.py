@@ -8,9 +8,18 @@ the source file.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 KINDS = {"color", "font", "size", "space"}
+
+HEX3 = re.compile(r"^#([0-9a-fA-F]{3})$")
+HEX6 = re.compile(r"^#([0-9a-fA-F]{6})$")
+HEX8 = re.compile(r"^#([0-9a-fA-F]{8})$")
+RGB_FN = re.compile(
+    r"^rgba?\(\s*([0-9.]+)\s*,\s*([0-9.]+)\s*,\s*([0-9.]+)(?:\s*,\s*([0-9.]+))?\s*\)$"
+)
+LENGTH = re.compile(r"^-?\d+(\.\d+)?(rem|em|px|pt|%|vw|vh)?$")
 
 
 @dataclass(frozen=True)
