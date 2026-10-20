@@ -1,20 +1,76 @@
 [build-system]
-requires = ["setuptools>=61"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "rigds-mcp"
 version = "1.2.0"
-description = "RIG Design Studio MCP server (stdio, newline JSON-RPC)"
+description = "RIG Design Studio MCP server and tokens-toolkit CLI"
 requires-python = ">=3.10"
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Mike Rodgers" }]
+keywords = [
+    "design-tokens",
+    "design-system",
+    "wcag",
+    "contrast",
+    "mcp",
+    "tailwind",
+    "css-variables",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Code Generators",
+    "Topic :: Software Development :: Testing",
+    "Typing :: Typed",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=7.4", "pytest-cov>=4", "ruff>=0.6"]
 
 [project.scripts]
 rigds-mcp = "rigds_mcp.server:main"
+tokens-toolkit = "tokens_toolkit.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/mrodgersjs-web/design-studio"
+Repository = "https://github.com/mrodgersjs-web/design-studio"
+Issues = "https://github.com/mrodgersjs-web/design-studio/issues"
+Changelog = "https://github.com/mrodgersjs-web/design-studio/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
-include = ["rigds_mcp*"]
+include = ["rigds_mcp*", "tokens_toolkit*"]
+
 [tool.setuptools.package-data]
 rigds_mcp = ["references/SECTION-CATALOG.md", "scorecard.py"]
+tokens_toolkit = ["py.typed"]
+
+[tool.ruff]
+line-length = 120
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "RUF"]
+
+[tool.coverage.run]
+branch = true
+source = ["tokens_toolkit"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["--strict-markers", "-ra"]
