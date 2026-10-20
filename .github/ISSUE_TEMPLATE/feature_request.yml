@@ -1,0 +1,48 @@
+name: Feature request
+about: Sketch the smallest useful change
+title: "[feature] "
+labels: ["enhancement"]
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        The toolkit is intentionally narrow. New exporters, new kinds, and
+        new checklist defaults all belong here. The bar is a small
+        runnable artefact, a test that proves it, and a clean diff against
+        `ghup/2026-10-19`.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you solving?
+      description: One or two plain sentences on the gap.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: shape
+    attributes:
+      label: Smallest useful shape
+      description: >
+        The smallest API / CLI / new kind / new validator that would make
+        the problem go away.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Who benefits, and how would you measure it?
+      description: Optional. Brief sketch of users and a measurable signal.
+      render: text
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Optional. What you considered and why this is the smallest fix.
+      render: text

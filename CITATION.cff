@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you cite this software in academic work, please use the metadata below."
+title: "design-studio"
+version: "1.2.0"
+date-released: "2026-10-19"
+authors:
+  - family-names: "Rodgers"
+    given-names: "Mike"
+type: software
+license: MIT
+url: "https://github.com/mrodgersjs-web/design-studio"
+repository-code: "https://github.com/mrodgersjs-web/design-studio"
+abstract: >-
+  A small design-token toolkit: read JSON tokens, run WCAG contrast checks,
+  export to CSS / JSON / Tailwind / Markdown, and validate the UI review
+  checklist. Pure Python, no third-party runtime dependencies.
+keywords:
+  - design-tokens
+  - wcag
+  - contrast
+  - tailwind
+  - css-variables
+  - checklist
