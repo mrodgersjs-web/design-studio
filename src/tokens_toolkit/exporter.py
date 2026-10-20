@@ -15,7 +15,7 @@ from __future__ import annotations
 import json
 import re
 
-from . import parser as P
+from . import parser
 
 _CSS_VAR = re.compile(r"[^a-zA-Z0-9_-]")
 
@@ -67,7 +67,10 @@ def to_tailwind(tf: parser.TokenFile) -> str:
     for tok in tokens:
         alias = _css_name(tok.name)
         block.append(f"  --color-{tok.name.replace('.', '-')}: var({alias});")
-        block.append(f"  --font-{tok.name.replace('.', '-')}: var({alias});" if tok.kind == "font" else f"  {alias}: {tok.value};")
+        if tok.kind == "font":
+            block.append(f"  --font-{tok.name.replace('.', '-')}: var({alias});")
+        else:
+            block.append(f"  {alias}: {tok.value};")
     block.append("}")
     return "\n".join(block) + "\n"
 
