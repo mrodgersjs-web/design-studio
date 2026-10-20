@@ -22,6 +22,10 @@ RGB_FN = re.compile(
 LENGTH = re.compile(r"^-?\d+(\.\d+)?(rem|em|px|pt|%|vw|vh)?$")
 
 
+class TokenError(ValueError):
+    """The spec cannot be turned into an app. The message says how to fix it."""
+
+
 @dataclass(frozen=True)
 class Token:
     name: str
