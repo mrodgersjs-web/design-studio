@@ -72,3 +72,15 @@ def _resolve_value(record):
             f"token record must be a string or {{'$value': ...}}; got {type(record).__name__}"
         )
     return record
+
+
+def parse_token_file(path):
+    """Read the file and parse its JSON. Refuses bad JSON with a TokenError."""
+    import json
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise TokenError(
+            f"{path}: not valid JSON ({exc.msg} at line {exc.lineno})"
+        ) from exc
+    return parse_token_object(raw, source=str(path))
