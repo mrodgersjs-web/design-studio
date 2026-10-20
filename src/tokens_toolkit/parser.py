@@ -109,3 +109,12 @@ def parse_token_object(raw, *, source: str = "<memory>"):
     tokens: list = []
     _walk(raw, prefix="", out=tokens, source=source)
     return TokenFile(schema=schema, tokens=tokens)
+
+
+def _walk(node, prefix, out, source):
+    for key, value in node.items():
+        if key.startswith("$"):
+            continue
+        path = f"{prefix}{key}" if not prefix else f"{prefix}.{key}"
+        if isinstance(value, dict) and "$value" not in value:
+            _walk(value, path, out, source)
