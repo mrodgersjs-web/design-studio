@@ -60,7 +60,6 @@ class TokenFile:
 
 
 def _resolve_value(record):
-    """Accept plain-string or {"$value": ...} shapes; reject non-string records."""
     if isinstance(record, dict):
         if "$value" in record:
             return record["$value"]
@@ -74,18 +73,6 @@ def _resolve_value(record):
     return record
 
 
-def parse_token_file(path):
-    """Read the file and parse its JSON. Refuses bad JSON with a TokenError."""
-    import json
-    try:
-        raw = json.loads(path.read_text(encoding="utf-8"))
-    except json.JSONDecodeError as exc:
-        raise TokenError(
-            f"{path}: not valid JSON ({exc.msg} at line {exc.lineno})"
-        ) from exc
-    return parse_token_object(raw, source=str(path))
-
-
 def _classify(group, raw_value):
     group_kind = {
         "color": "color", "colour": "color", "font": "font",
@@ -97,7 +84,28 @@ def _classify(group, raw_value):
     if isinstance(raw_value, str):
         if HEX3.match(raw_value) or HEX6.match(raw_value) or HEX8.match(raw_value) or RGB_FN.match(raw_value):
             value_kind = "color"
-    return group_kind, value_kind
+        elif LENGTH.match(raw_value):
+            low = group.lower()
+            if "size" in low:
+                value_kind = "size"
+            elif "space" in low or "spacing" in low:
+                value_kind = "space"
+            else:
+                value_kind = None
+        else:
+            value_kind = "font" if "font" in group.lower() else None
+    if group_kind and value_kind and group_kind != value_kind:
+        raise TokenError(f"group '{group}' expects {group_kind} but value {raw_value!r} looks like {value_kind}")
+    return group_kind or value_kind
+
+
+def parse_token_file(path):
+    import json
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise TokenError(f"{path}: not valid JSON ({exc.msg} at line {exc.lineno})") from exc
+    return parse_token_object(raw, source=str(path))
 
 
 def parse_token_object(raw, *, source: str = "<memory>"):
@@ -118,8 +126,6 @@ def _walk(node, prefix, out, source):
         path = f"{prefix}{key}" if not prefix else f"{prefix}.{key}"
         if isinstance(value, dict) and "$value" not in value:
             _walk(value, path, out, source)
-        if kind is None:
-            kind = "color" if isinstance(value, str) else "font"
             continue
         kind = _classify(
             path.split(".", 1)[0] if "." in path else path,
@@ -133,3 +139,70 @@ def _walk(node, prefix, out, source):
                 kind = "color"
             else:
                 kind = "font"
+        if kind not in KINDS:
+            raise TokenError(f"{source}: token {path!r} has unrecognised kind {kind!r}")
+        token_value = _resolve_value(value)
+        if not isinstance(token_value, str):
+            raise TokenError(
+                f"{source}: token {path!r} resolved value must be a string; "
+                f"got {type(token_value).__name__}"
+            )
+        out.append(Token(name=path, kind=kind, value=token_value, source=repr(value)))
+
+
+def validate_color(value):
+    if HEX3.match(value) or HEX6.match(value) or HEX8.match(value):
+        return
+    if RGB_FN.match(value):
+        return
+    raise TokenError(f"not a valid CSS color: {value!r}")
+
+
+def validate_font(value):
+    if not value or len(value) > 200:
+        raise TokenError(f"font token {value!r} must be a non-empty string under 200 chars")
+    if "\n" in value or "\r" in value:
+        raise TokenError(f"font token must not contain newlines; got {value!r}")
+
+
+def validate_size_or_space(value):
+    if value.lower() in {"auto", "inherit", "initial", "unset"}:
+        return
+    if LENGTH.match(value):
+        return
+    if value.startswith("clamp(") and value.endswith(")"):
+        return
+    raise TokenError(
+        f"size/space token {value!r} is not a recognised length or CSS keyword; "
+        "expected e.g. '1rem', '16px', 'clamp(2rem, 5vw, 3.5rem)', or 'auto'."
+    )
+
+
+VALIDATORS = {
+    "color": validate_color, "font": validate_font,
+    "size": validate_size_or_space, "space": validate_size_or_space,
+}
+
+
+def validate(tf):
+    errors: list = []
+    for tok in tf.tokens:
+        try:
+            VALIDATORS[tok.kind](tok.value)
+        except TokenError as exc:
+            errors.append(f"{tok.name}: {exc}")
+    return errors
+
+
+def tokens_by_group(tf, group):
+    prefix = group if group.endswith(".") else f"{group}."
+    return [t for t in tf.tokens if t.name == group or t.name.startswith(prefix)]
+
+
+def iter_groups(tf):
+    seen: set = set()
+    for t in tf.tokens:
+        head = t.name.split(".", 1)[0]
+        if head not in seen:
+            seen.add(head)
+            yield head
