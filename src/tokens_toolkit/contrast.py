@@ -74,7 +74,7 @@ def _clamp_byte(text: str) -> int:
         value = float(text)
     except ValueError as exc:
         raise ContrastError(f"color channel not numeric: {text!r}") from exc
-    rounded = int(round(value))
+    rounded = round(value)
     if rounded < 0:
         return 0
     if rounded > 255:
@@ -125,10 +125,16 @@ def _channel_luminance(channel: int) -> float:
 
 
 def relative_luminance(color: RGBA) -> float:
-    """The relative luminance per WCAG 2.1 (alpha is ignored for opaque foreground/background over a known background)."""
+    """The relative luminance per WCAG 2.1.
+
+    Alpha is ignored for opaque foreground/background over a known background.
+    """
     if color.alpha < 1.0:
         raise ContrastError("relative_luminance requires an opaque color")
-    return 0.2126 * _channel_luminance(color.r) + 0.7152 * _channel_luminance(color.g) + 0.0722 * _channel_luminance(color.b)
+    r = _channel_luminance(color.r)
+    g = _channel_luminance(color.g)
+    b = _channel_luminance(color.b)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
 
 
 def composite(front: RGBA, back: RGBA) -> RGBA:
