@@ -8,32 +8,6 @@ version = "1.2.0"
 description = "RIG Design Studio MCP server (stdio, newline JSON-RPC)"
 requires-python = ">=3.10"
 readme = "README.md"
-license = { text = "MIT" }
-authors = [{ name = "Mike Rodgers" }]
-keywords = [
-    "design-tokens",
-    "design-system",
-    "wcag",
-    "contrast",
-    "mcp",
-    "tailwind",
-    "css-variables",
-]
-classifiers = [
-    "Development Status :: 5 - Production/Stable",
-    "Environment :: Console",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Topic :: Software Development :: Code Generators",
-    "Topic :: Software Development :: Testing",
-    "Typing :: Typed",
-]
 
 [project.scripts]
 rigds-mcp = "rigds_mcp.server:main"
