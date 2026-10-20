@@ -50,6 +50,7 @@ Issues = "https://github.com/mrodgersjs-web/design-studio/issues"
 Changelog = "https://github.com/mrodgersjs-web/design-studio/blob/main/CHANGELOG.md"
 
 [tool.setuptools.packages.find]
+where = ["src", "."]
 include = ["rigds_mcp*", "tokens_toolkit*"]
 
 [tool.setuptools.package-data]

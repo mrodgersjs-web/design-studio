@@ -5,6 +5,15 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+Fix (2026-10-19, this commit): `pyproject.toml`'s `[tool.setuptools.packages.find]` now
+searches `where = ["src", "."]`. Before this commit `tokens_toolkit` (which lives under
+`src/`) was not installed by `pip install -e .`, so the README quickstart command
+`tokens-toolkit validate tokens/base.json` failed with `ModuleNotFoundError` and
+`import tokens_toolkit` failed in a fresh venv. After this commit both work:
+`import tokens_toolkit` prints version 0.1.0 and `tokens-toolkit validate tokens/base.json`
+returns `"ok": true`.
+
+
 Polish wave (2026-10-19, this commit): `.github/CODEOWNERS` (`* @mrodgersjs-web`) and
 `.github/copilot-instructions.md` were added, the README CI badge moved to the shields
 `github/actions/workflow/status` form (the old badge.svg line was removed),
