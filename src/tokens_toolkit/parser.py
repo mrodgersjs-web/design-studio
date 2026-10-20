@@ -93,4 +93,8 @@ def _classify(group, raw_value):
         "sizes": "size", "font-size": "size", "space": "space",
         "spacing": "space",
     }.get(group.lower())
-    return group_kind
+    value_kind = None
+    if isinstance(raw_value, str):
+        if HEX3.match(raw_value) or HEX6.match(raw_value) or HEX8.match(raw_value) or RGB_FN.match(raw_value):
+            value_kind = "color"
+    return group_kind, value_kind
