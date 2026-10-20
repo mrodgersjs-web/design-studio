@@ -8,6 +8,8 @@ version = "1.2.0"
 description = "RIG Design Studio MCP server (stdio, newline JSON-RPC)"
 requires-python = ">=3.10"
 readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Mike Rodgers" }]
 
 [project.scripts]
 rigds-mcp = "rigds_mcp.server:main"
