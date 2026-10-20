@@ -12,9 +12,9 @@ against them.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
-import re
 
 YAML_FRONT = re.compile(r"^---\s*\n(.*?)\n---\s*\n(.*)$", re.DOTALL)
 
@@ -50,7 +50,8 @@ def parse_checklist_text(raw: str, *, source: str = "<memory>") -> Checklist:
     m = YAML_FRONT.match(raw)
     if not m:
         raise ValueError(f"{source}: expected YAML frontmatter delimited by '---' at the top")
-    front, body = m.group(1), m.group(2)
+    front, _body = m.group(1), m.group(2)
+    del _body  # reserved for future use; parser keeps the body in scope
     meta = _tiny_yaml(front, source=source + ":frontmatter")
     if "name" not in meta or "items" not in meta:
         raise ValueError(f"{source}: frontmatter must include 'name' and 'items'")
@@ -149,7 +150,7 @@ def _tiny_yaml(text: str, *, source: str = "<yaml>") -> dict:
         if ":" not in line:
             i += 1
             continue
-        head_indent = len(line) - len(line.lstrip())
+        _head_indent = len(line) - len(line.lstrip())
         key, value = line.split(":", 1)
         key = key.strip()
         value = value.strip()
