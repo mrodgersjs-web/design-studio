@@ -118,3 +118,18 @@ def _walk(node, prefix, out, source):
         path = f"{prefix}{key}" if not prefix else f"{prefix}.{key}"
         if isinstance(value, dict) and "$value" not in value:
             _walk(value, path, out, source)
+        if kind is None:
+            kind = "color" if isinstance(value, str) else "font"
+            continue
+        kind = _classify(
+            path.split(".", 1)[0] if "." in path else path,
+            value if not isinstance(value, dict) else value.get("$value"),
+        )
+        if kind is None:
+            if isinstance(value, str) and (
+                HEX3.match(value) or HEX6.match(value)
+                or HEX8.match(value) or RGB_FN.match(value)
+            ):
+                kind = "color"
+            else:
+                kind = "font"
