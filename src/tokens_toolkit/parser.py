@@ -84,3 +84,13 @@ def parse_token_file(path):
             f"{path}: not valid JSON ({exc.msg} at line {exc.lineno})"
         ) from exc
     return parse_token_object(raw, source=str(path))
+
+
+def _classify(group, raw_value):
+    group_kind = {
+        "color": "color", "colour": "color", "font": "font",
+        "fonts": "font", "typography": "font", "size": "size",
+        "sizes": "size", "font-size": "size", "space": "space",
+        "spacing": "space",
+    }.get(group.lower())
+    return group_kind
