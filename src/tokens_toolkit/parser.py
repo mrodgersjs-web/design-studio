@@ -57,3 +57,18 @@ class TokenFile:
 
     def kinds(self):
         return sorted({t.kind for t in self.tokens})
+
+
+def _resolve_value(record):
+    """Accept plain-string or {"$value": ...} shapes; reject non-string records."""
+    if isinstance(record, dict):
+        if "$value" in record:
+            return record["$value"]
+        raise TokenError(
+            f"token record must have a '$value' key when not a plain string; got keys {sorted(record)}"
+        )
+    if record is None or isinstance(record, (bool, int, float)):
+        raise TokenError(
+            f"token record must be a string or {{'$value': ...}}; got {type(record).__name__}"
+        )
+    return record
