@@ -41,3 +41,18 @@ class Token:
 class TokenFile:
     schema: str | None
     tokens: list = field(default_factory=list)
+
+    def by_kind(self, kind):
+        return [t for t in self.tokens if t.kind == kind]
+
+    def get(self, name):
+        for t in self.tokens:
+            if t.name == name:
+                return t
+        return None
+
+    def names(self):
+        return [t.name for t in self.tokens]
+
+    def kinds(self):
+        return sorted({t.kind for t in self.tokens})
