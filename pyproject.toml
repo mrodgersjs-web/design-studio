@@ -4,10 +4,21 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "rigds-mcp"
-version = "1.1.0"
+version = "1.2.0"
 description = "RIG Design Studio MCP server (stdio, newline JSON-RPC)"
 requires-python = ">=3.10"
 readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Mike Rodgers" }]
+keywords = [
+    "design-tokens",
+    "design-system",
+    "wcag",
+    "contrast",
+    "mcp",
+    "tailwind",
+    "css-variables",
+]
 
 [project.scripts]
 rigds-mcp = "rigds_mcp.server:main"
