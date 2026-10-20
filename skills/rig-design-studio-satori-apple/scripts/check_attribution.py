@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 LEDGER = ROOT / "references" / "evidence-ledger-v0.1.md"
 BANNED = (
     "verified Satori or Apple grounding",
-    "Apple’s operating pattern in the seed lesson is communication-first",
+    "Apple's operating pattern in the seed lesson is communication-first",
     "Apple's operating pattern in the seed lesson is communication-first",
 )
 

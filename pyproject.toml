@@ -59,6 +59,7 @@ tokens_toolkit = ["py.typed"]
 [tool.ruff]
 line-length = 120
 src = ["src", "tests"]
+extend-exclude = ["mcp", "rigds_mcp", "assets", "examples"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "B", "UP", "RUF"]

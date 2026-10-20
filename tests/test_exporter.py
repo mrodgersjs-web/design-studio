@@ -1,8 +1,6 @@
-"""Tests for tokens_toolkit.exporter."""
-
 from __future__ import annotations
 
-import pytest
+import json
 
 from tokens_toolkit import exporter, parser
 
@@ -40,8 +38,7 @@ def test_to_css_sorts_tokens_alphabetically():
 
 def test_to_json_returns_sorted_and_indented():
     text = exporter.to_json(_small_tf())
-    assert text.startswith('{\n  "$schema"' if _small_tf().schema else '{\n  "$schema"')
-    import json
+    assert text.startswith('{\n  "$schema"')
 
     payload = json.loads(text)
     assert payload["tokens"][0]["name"] == "color.bg"
@@ -50,7 +47,7 @@ def test_to_json_returns_sorted_and_indented():
 
 def test_to_json_handles_no_schema_field():
     tf = parser.parse_token_object({"color": {"a": "#ffffff"}})
-    payload = __import__("json").loads(exporter.to_json(tf))
+    payload = json.loads(exporter.to_json(tf))
     assert payload["$schema"] is None
 
 

@@ -2,8 +2,6 @@
 """Build a wheel, install it in a fresh venv, prove compose + Satori tools."""
 from __future__ import annotations
 
-import json
-import os
 import subprocess
 import sys
 import tempfile

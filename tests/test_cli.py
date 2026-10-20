@@ -12,7 +12,6 @@ import pytest
 
 from tokens_toolkit import cli
 
-
 SAMPLE_TOKENS = {
     "color": {"bg": "#0b1220", "fg": "#e5e7eb"},
     "font": {"sans": "IBM Plex Sans"},

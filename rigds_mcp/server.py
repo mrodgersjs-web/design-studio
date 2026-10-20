@@ -13,7 +13,8 @@ import re
 import subprocess
 import sys
 import urllib.request
-from importlib.resources import as_file, files as pkg_files
+from importlib.resources import as_file
+from importlib.resources import files as pkg_files
 from pathlib import Path
 
 PROTOCOL = "2024-11-05"
@@ -114,7 +115,10 @@ def backend():
 def engine_status(root):
     sys.path.insert(0, root)
     try:
-        import engine.loop, engine.ledger, engine.governance, engine.gate  # noqa: F401
+        import engine.gate
+        import engine.governance
+        import engine.ledger
+        import engine.loop
         led = engine.ledger.ProvenanceLedger()
         return {"engine": "import OK", "loop": "run_loop", "gate": "RigQualityGate",
                 "ledger_records": len(led.read_all()),

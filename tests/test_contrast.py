@@ -38,7 +38,8 @@ def test_short_hex_round_trip_via_long_hex():
 
 
 def test_hex6_accepts_lower_and_upper_case():
-    assert contrast.relative_luminance(contrast.parse_color("#AaCc12")) == contrast.relative_luminance(contrast.parse_color("#AACC12"))
+    lc = contrast.parse_color
+    assert contrast.relative_luminance(lc("#AaCc12")) == contrast.relative_luminance(lc("#AACC12"))
 
 
 def test_rgb_function_parses():
@@ -48,9 +49,10 @@ def test_rgb_function_parses():
 
 def test_rgba_with_zero_alpha_composites_against_background():
     # Pure red on a black background should resolve to pure red.
-    result, fg, bg = contrast.check_pair("rgba(255, 0, 0, 1)", "#000000")
+    result, fg, _bg = contrast.check_pair("rgba(255, 0, 0, 1)", "#000000")
     assert fg.r == 255 and fg.alpha == 1.0
-    assert result.ratio == pytest.approx(contrast.contrast_ratio(contrast.RGBA(255, 0, 0), contrast.RGBA(0, 0, 0)), abs=0.01)
+    ref = contrast.contrast_ratio(contrast.RGBA(255, 0, 0), contrast.RGBA(0, 0, 0))
+    assert result.ratio == pytest.approx(ref, abs=0.01)
 
 
 def test_rgba_with_half_alpha_is_composited():
